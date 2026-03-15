@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pdf-podcast-backend
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    volumes:
+      - audio_data:/app/static/audio
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pdf-podcast-frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    restart: always
+
+volumes:
+  audio_data:
