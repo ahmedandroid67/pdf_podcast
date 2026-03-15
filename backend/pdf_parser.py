@@ -38,7 +38,7 @@ def extract_text_from_bytes(pdf_bytes: bytes) -> tuple[str, int, bool]:
         return "", 0, False
 
 
-async def extract_text_from_url(url: str) -> str:
+async def extract_text_from_url(url: str) -> tuple[str, int, bool]:
     """Download a PDF from a URL and extract its text."""
     logger.info("Downloading PDF from URL: %s", url)
     async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client:

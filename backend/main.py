@@ -99,13 +99,17 @@ async def upload_pdf(file: UploadFile = File(...)):
     if not pdf_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
+    logger.info("Received PDF for upload: %s (%d bytes)", file.filename, len(pdf_bytes))
     try:
+        logger.info("Starting text extraction...")
         text, page_count, is_scanned = extract_text_from_bytes(pdf_bytes)
+        logger.info("Extraction complete. Text length: %d, Pages: %d, Scanned: %s", len(text), page_count, is_scanned)
     except Exception as exc:
         logger.exception("Failed to extract text from uploaded file")
         raise HTTPException(status_code=422, detail=f"Could not parse PDF: {exc}") from exc
 
     if not text:
+        logger.warning("No text extracted from PDF.")
         if is_scanned:
             msg = f"This document ({page_count} pages) appears to be a scanned image. We currently only support digital PDFs with readable text."
         else:
@@ -118,8 +122,10 @@ async def upload_pdf(file: UploadFile = File(...)):
 @app.post("/api/url", response_model=TextResponse, summary="Provide a PDF URL and extract text")
 async def pdf_from_url(body: UrlRequest):
     """Download a PDF from a URL and return the extracted plain text."""
+    logger.info("Received URL for processing: %s", body.url)
     try:
-        text = await extract_text_from_url(str(body.url))
+        text, page_count, is_scanned = await extract_text_from_url(str(body.url))
+        logger.info("URL processing complete. Text length: %d", len(text))
     except Exception as exc:
         logger.exception("Failed to download or parse PDF from URL")
         raise HTTPException(status_code=422, detail=f"Could not fetch/parse PDF: {exc}") from exc
@@ -205,19 +211,25 @@ async def podcast(body: SummaryResponse):
 )
 async def process_upload(file: UploadFile = File(...)):
     """One-shot endpoint: upload a PDF, get back text, summary, script, and audio."""
-    _require_openai_key()
+    _require_google_key()
     pdf_bytes = await file.read()
     if not pdf_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
     try:
-        text = extract_text_from_bytes(pdf_bytes)
+        text, page_count, is_scanned = extract_text_from_bytes(pdf_bytes)
+        if not text:
+            msg = "Could not extract text."
+            if is_scanned:
+                msg = "Document appears to be a scanned image."
+            raise ValueError(msg)
+            
         summary = await summarize_text(text)
         script = await generate_podcast_script(summary)
         audio_path = await generate_audio(script)
     except Exception as exc:
         logger.exception("Full pipeline failed (upload)")
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail=_handle_api_error(exc))
 
     return FullPipelineResponse(
         text=text,
@@ -234,15 +246,18 @@ async def process_upload(file: UploadFile = File(...)):
 )
 async def process_url(body: UrlRequest):
     """One-shot endpoint: provide a PDF URL, get back text, summary, script, and audio."""
-    _require_openai_key()
+    _require_google_key()
     try:
-        text = await extract_text_from_url(str(body.url))
+        text, page_count, is_scanned = await extract_text_from_url(str(body.url))
+        if not text:
+            raise ValueError("No text found in PDF.")
+            
         summary = await summarize_text(text)
         script = await generate_podcast_script(summary)
         audio_path = await generate_audio(script)
     except Exception as exc:
         logger.exception("Full pipeline failed (URL)")
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail=_handle_api_error(exc))
 
     return FullPipelineResponse(
         text=text,
@@ -274,14 +289,6 @@ async def health():
     return {"status": "ok"}
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _require_openai_key() -> None:
-    if not os.environ.get("OPENAI_API_KEY"):
-        raise HTTPException(
-            status_code=503,
-            detail="OPENAI_API_KEY environment variable is not set.",
-        )
+# Static files serving setup
+AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/audio", StaticFiles(directory=str(AUDIO_DIR)), name="audio")

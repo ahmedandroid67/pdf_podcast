@@ -42,3 +42,14 @@ def delete_old_audio_files():
 def list_audio_files():
     """List all generated audio files."""
     return [f.name for f in AUDIO_DIR.glob("*.mp3")]
+
+def delete_audio_file(filename: str) -> bool:
+    """Delete a specific audio file by name."""
+    filepath = AUDIO_DIR / filename
+    try:
+        if filepath.exists():
+            filepath.unlink()
+            return True
+    except Exception:
+        pass
+    return False
