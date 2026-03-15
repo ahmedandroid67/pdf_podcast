@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - backend
+    # Port for manual access (via IP)
+    ports:
+      - "3015:80"
+    # Labels for Coolify (Traefik) to route the domain to the frontend
+    labels:
+      - "coolify.managed=true"
+      - "coolify.service.type=compose"
+    restart: always
+
   backend:
     build:
       context: ./backend
@@ -9,16 +24,6 @@ services:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
     volumes:
       - audio_data:/app/static/audio
-    restart: always
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    depends_on:
-      - backend
-    ports:
-      - "3015:80"
     restart: always
 
 volumes:
