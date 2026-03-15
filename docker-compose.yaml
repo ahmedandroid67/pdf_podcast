@@ -5,7 +5,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: pdf-podcast-backend
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
     volumes:
@@ -16,11 +15,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: pdf-podcast-frontend
     depends_on:
       - backend
     ports:
-      - "8080:80"
+      - "3015:80"
     restart: always
 
 volumes:

@@ -12,7 +12,7 @@ async def generate_podcast_script(summary: str) -> str:
         raise ValueError("GOOGLE_API_KEY not found in environment")
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-3-flash-preview')
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
     system_prompt = """
     You are an expert podcast scriptwriter. 
