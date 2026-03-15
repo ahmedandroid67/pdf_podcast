@@ -1,0 +1,44 @@
+import os
+import edge_tts
+from pathlib import Path
+import logging
+import uuid
+
+logger = logging.getLogger(__name__)
+
+# Directory to store audio files
+AUDIO_DIR = Path(__file__).parent / "static" / "audio"
+AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
+async def generate_audio(text: str, voice: str = "en-US-AndrewNeural") -> Path:
+    """
+    Generate audio from text using Microsoft Edge TTS (Free).
+    Popular high-quality voices: en-US-AndrewNeural, en-GB-SoniaNeural, en-US-EmmaNeural
+    """
+    filename = f"{uuid.uuid4()}.mp3"
+    filepath = AUDIO_DIR / filename
+    
+    try:
+        # Clean text: remove characters that might break TTS
+        clean_text = text.replace("**", "").replace("__", "").replace("#", "")
+        
+        communicate = edge_tts.Communicate(clean_text, voice)
+        await communicate.save(str(filepath))
+        
+        logger.info(f"Generated free audio: {filepath}")
+        return filepath
+    except Exception as e:
+        logger.error(f"Edge-TTS generation failed: {e}")
+        raise
+
+def delete_old_audio_files():
+    """Cleanup utility to remove generated audio files."""
+    for file in AUDIO_DIR.glob("*.mp3"):
+        try:
+            file.unlink()
+        except Exception:
+            pass
+
+def list_audio_files():
+    """List all generated audio files."""
+    return [f.name for f in AUDIO_DIR.glob("*.mp3")]
