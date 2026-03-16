@@ -12,7 +12,7 @@ async def summarize_text(text: str, lang: str = "en") -> str:
         raise ValueError("GOOGLE_API_KEY not found in environment")
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-flash-latest')
 
     lang_map = {
         "en": "English",
