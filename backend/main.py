@@ -69,6 +69,7 @@ class TextResponse(BaseModel):
 class SummaryRequest(BaseModel):
     text: str
     lang: str = "en"
+    mode: str = "podcast"
 
 
 class SummaryResponse(BaseModel):
@@ -78,6 +79,7 @@ class SummaryResponse(BaseModel):
 class PodcastRequest(BaseModel):
     summary: str
     lang: str = "en"
+    mode: str = "podcast"
 
 
 class PodcastResponse(BaseModel):
@@ -182,7 +184,7 @@ async def summarize(body: SummaryRequest):
     _require_google_key()
 
     try:
-        summary = await summarize_text(body.text, body.lang)
+        summary = await summarize_text(body.text, body.lang, body.mode)
     except Exception as exc:
         logger.exception("Summarization failed")
         raise HTTPException(status_code=500, detail=_handle_api_error(exc))
@@ -199,7 +201,7 @@ async def podcast(body: PodcastRequest):
     _require_google_key()
 
     try:
-        script = await generate_podcast_script(body.summary, body.lang)
+        script = await generate_podcast_script(body.summary, body.lang, body.mode)
         audio_path = await generate_audio(script, body.lang)
         audio_url = f"/audio/{audio_path.name}"
     except Exception as exc:

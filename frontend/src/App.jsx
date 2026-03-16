@@ -7,6 +7,7 @@ import UrlInput from './components/UrlInput';
 import PipelineStepper from './components/PipelineStepper';
 import AudioPlayer from './components/AudioPlayer';
 import LanguageSelector from './components/LanguageSelector';
+import AudioModeSelector from './components/AudioModeSelector';
 
 // Step indices
 const STEP = { UPLOAD: 0, EXTRACT: 1, SUMMARIZE: 2, PODCAST: 3, AUDIO: 4 };
@@ -25,6 +26,7 @@ export default function App() {
   const [summary, setSummary] = useState('');
   const [script, setScript] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
+  const [processingMode, setProcessingMode] = useState('podcast'); // 'podcast' | 'audiobook'
 
   const busy = status === STATUS.LOADING;
 
@@ -65,7 +67,7 @@ export default function App() {
   const runSummarize = async (text) => {
     setStep(STEP.SUMMARIZE);
     try {
-      const data = await summarizeText(text, i18n.language);
+      const data = await summarizeText(text, i18n.language, processingMode);
       setSummary(data.summary);
       setStep(STEP.PODCAST);
       await runPodcast(data.summary);
@@ -79,7 +81,7 @@ export default function App() {
   const runPodcast = async (sum) => {
     setStep(STEP.PODCAST);
     try {
-      const data = await generatePodcast(sum, i18n.language);
+      const data = await generatePodcast(sum, i18n.language, processingMode);
       setScript(data.script);
       setAudioUrl(data.audio_url);
       setStep(STEP.AUDIO);
@@ -192,6 +194,13 @@ export default function App() {
             ) : (
               <UrlInput onUrl={handleUrl} disabled={busy} />
             )}
+
+            {/* Mode Selector */}
+            <AudioModeSelector 
+              mode={processingMode} 
+              onChange={setProcessingMode} 
+              disabled={busy} 
+            />
 
             {/* Troubleshooting Tip */}
             {!busy && status !== STATUS.ERROR && (

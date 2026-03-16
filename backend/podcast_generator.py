@@ -5,8 +5,14 @@ import asyncio
 
 logger = logging.getLogger(__name__)
 
-async def generate_podcast_script(summary: str, lang: str = "en") -> str:
-    """Generate a podcast narration script using Google Gemini."""
+async def generate_podcast_script(summary: str, lang: str = "en", mode: str = "podcast") -> str:
+    """Generate a podcast narration script or return cleaned text for audiobook."""
+    
+    if mode == "audiobook":
+        # In audiobook mode, the 'summary' variable actually contains the full cleaned text.
+        # We don't want to add podcast-style hooks, just return it as is.
+        return summary
+
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not found in environment")
