@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './index.css';
 import { uploadPdf, fetchPdfUrl, summarizeText, generatePodcast } from './api';
 import DropZone from './components/DropZone';
 import UrlInput from './components/UrlInput';
 import PipelineStepper from './components/PipelineStepper';
 import AudioPlayer from './components/AudioPlayer';
+import LanguageSelector from './components/LanguageSelector';
 
 // Step indices
 const STEP = { UPLOAD: 0, EXTRACT: 1, SUMMARIZE: 2, PODCAST: 3, AUDIO: 4 };
@@ -12,6 +14,7 @@ const STEP = { UPLOAD: 0, EXTRACT: 1, SUMMARIZE: 2, PODCAST: 3, AUDIO: 4 };
 const STATUS = { IDLE: 'idle', LOADING: 'loading', ERROR: 'error', DONE: 'done' };
 
 export default function App() {
+  const { t, i18n } = useTranslation();
   const [tab, setTab] = useState('file'); // 'file' | 'url'
   const [step, setStep] = useState(STEP.UPLOAD);
   const [status, setStatus] = useState(STATUS.IDLE);
@@ -62,7 +65,7 @@ export default function App() {
   const runSummarize = async (text) => {
     setStep(STEP.SUMMARIZE);
     try {
-      const data = await summarizeText(text);
+      const data = await summarizeText(text, i18n.language);
       setSummary(data.summary);
       setStep(STEP.PODCAST);
       await runPodcast(data.summary);
@@ -76,7 +79,7 @@ export default function App() {
   const runPodcast = async (sum) => {
     setStep(STEP.PODCAST);
     try {
-      const data = await generatePodcast(sum);
+      const data = await generatePodcast(sum, i18n.language);
       setScript(data.script);
       setAudioUrl(data.audio_url);
       setStep(STEP.AUDIO);
@@ -127,22 +130,9 @@ export default function App() {
           style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: '1.2rem' }}
           className="gradient-text"
         >
-          PodcastPDF
+          {t('app_name')}
         </span>
-        <span
-          style={{
-            marginLeft: 'auto',
-            fontSize: '0.75rem',
-            padding: '3px 10px',
-            borderRadius: '99px',
-            background: 'rgba(99,102,241,0.15)',
-            color: 'var(--brand-from)',
-            fontWeight: 600,
-            letterSpacing: '0.04em',
-          }}
-        >
-          AI-Powered
-        </span>
+        <LanguageSelector />
       </header>
 
       {/* ── Hero ───────────────────────────────────────────────────────── */}
@@ -154,13 +144,13 @@ export default function App() {
             className="gradient-text fade-up"
             style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 'clamp(2rem,5vw,3rem)', lineHeight: 1.15, marginBottom: '16px' }}
           >
-            Turn Any PDF into a Podcast
+            {t('hero_title')}
           </h1>
           <p
             className="fade-up"
             style={{ color: 'var(--text-2)', fontSize: '1.05rem', lineHeight: 1.6, animationDelay: '0.1s' }}
           >
-            Upload a PDF or paste a URL — our AI will extract, summarize, and narrate your document as an audio podcast.
+            {t('hero_subtitle')}
           </p>
         </div>
 
@@ -176,23 +166,23 @@ export default function App() {
           <div className="card fade-up" style={{ marginBottom: '28px', animationDelay: '0.15s' }}>
             {/* Tabs */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-              {['file', 'url'].map((t) => (
+              {['file', 'url'].map((tabItem) => (
                 <button
-                  key={t}
-                  id={`tab-${t}`}
+                  key={tabItem}
+                  id={`tab-${tabItem}`}
                   onClick={() => {
                     if (busy) return;
-                    setTab(t);
+                    setTab(tabItem);
                     // If clicking the file tab, trigger the file picker
-                    if (t === 'file') {
+                    if (tabItem === 'file') {
                       document.getElementById('pdf-file-input')?.click();
                     }
                   }}
-                  className={tab === t ? 'btn-primary' : 'btn-secondary'}
+                  className={tab === tabItem ? 'btn-primary' : 'btn-secondary'}
                   style={{ flex: 1 }}
                   disabled={busy}
                 >
-                  {t === 'file' ? '📄 Upload File' : '🔗 Paste URL'}
+                  {tabItem === 'file' ? t('tab_file') : t('tab_url')}
                 </button>
               ))}
             </div>
@@ -206,9 +196,9 @@ export default function App() {
             {/* Troubleshooting Tip */}
             {!busy && status !== STATUS.ERROR && (
               <p style={{ marginTop: '16px', fontSize: '0.78rem', color: 'var(--text-3)', textAlign: 'center' }}>
-                💡 Tip: Use a digital PDF for best results. Scanned documents (images) are not yet supported.
+                {t('tip')}
                 <br />
-                Need a test file? Try the <strong>sample_document.pdf</strong> in the project folder.
+                {t('test_file_hint')}
               </p>
             )}
 
@@ -229,12 +219,12 @@ export default function App() {
                 <div className="spinner" />
                 <div>
                   <p style={{ fontWeight: 600, fontSize: '0.92rem' }}>
-                    {step === STEP.EXTRACT && 'Extracting text from PDF…'}
-                    {step === STEP.SUMMARIZE && 'Summarizing with AI…'}
-                    {step === STEP.PODCAST && 'Writing podcast script & generating audio…'}
+                    {step === STEP.EXTRACT && t('status_extracting')}
+                    {step === STEP.SUMMARIZE && t('status_summarizing')}
+                    {step === STEP.PODCAST && t('status_generating')}
                   </p>
                   <p style={{ color: 'var(--text-3)', fontSize: '0.8rem', marginTop: '2px' }}>
-                    This may take 20–60 seconds
+                    {t('status_time_hint')}
                   </p>
                 </div>
               </div>
@@ -271,7 +261,7 @@ export default function App() {
               <h2
                 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: '1rem', marginBottom: '12px', color: 'var(--text-1)' }}
               >
-                📋 Document Summary
+                {t('results_summary')}
               </h2>
               <p style={{ color: 'var(--text-2)', fontSize: '0.88rem', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
                 {summary}
@@ -284,7 +274,7 @@ export default function App() {
                 <summary
                   style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-2)', userSelect: 'none', outline: 'none' }}
                 >
-                  📄 Raw extracted text ({extractedText.length.toLocaleString()} chars)
+                  {t('results_raw_text', { count: extractedText.length })}
                 </summary>
                 <div
                   style={{
@@ -308,7 +298,7 @@ export default function App() {
             {/* Start over */}
             <div style={{ textAlign: 'center', marginTop: '8px' }}>
               <button id="start-over-btn" className="btn-secondary" onClick={reset}>
-                ↩ Process Another PDF
+                {t('results_process_another')}
               </button>
             </div>
           </div>
@@ -320,15 +310,15 @@ export default function App() {
             <h2
               style={{ textAlign: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-2)', marginBottom: '20px' }}
             >
-              How it works
+              {t('how_it_works')}
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '16px' }}>
               {[
-                { icon: '📄', title: 'Upload PDF', desc: 'Drop a file or paste a URL' },
-                { icon: '🔍', title: 'Extract', desc: 'Text is pulled from every page' },
-                { icon: '🤖', title: 'Summarize', desc: 'GPT condenses key insights' },
-                { icon: '🎙️', title: 'Narrate', desc: 'Script written for podcasting' },
-                { icon: '🎧', title: 'Listen', desc: 'Audio generated & ready to play' },
+                { icon: '📄', title: t('how_step_1_title'), desc: t('how_step_1_desc') },
+                { icon: '🔍', title: t('how_step_2_title'), desc: t('how_step_2_desc') },
+                { icon: '🤖', title: t('how_step_3_title'), desc: t('how_step_3_desc') },
+                { icon: '🎙️', title: t('how_step_4_title'), desc: t('how_step_4_desc') },
+                { icon: '🎧', title: t('how_step_5_title'), desc: t('how_step_5_desc') },
               ].map((item, i) => (
                 <div
                   key={i}
@@ -347,7 +337,7 @@ export default function App() {
 
       {/* ── Footer ─────────────────────────────────────────────────────── */}
       <footer style={{ textAlign: 'center', padding: '20px', color: 'var(--text-3)', fontSize: '0.78rem', borderTop: '1px solid var(--border)' }}>
-        PodcastPDF &mdash; Powered by OpenAI &amp; FastAPI
+        {t('footer')}
       </footer>
     </div>
   );

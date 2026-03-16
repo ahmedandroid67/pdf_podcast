@@ -66,8 +66,18 @@ class TextResponse(BaseModel):
     text: str
 
 
+class SummaryRequest(BaseModel):
+    text: str
+    lang: str = "en"
+
+
 class SummaryResponse(BaseModel):
     summary: str
+
+
+class PodcastRequest(BaseModel):
+    summary: str
+    lang: str = "en"
 
 
 class PodcastResponse(BaseModel):
@@ -164,7 +174,7 @@ def _handle_api_error(exc: Exception) -> str:
 
 
 @app.post("/api/summarize", response_model=SummaryResponse, summary="Summarize extracted text")
-async def summarize(body: TextResponse):
+async def summarize(body: SummaryRequest):
     """Accept raw document text and return an AI-generated summary."""
     if not body.text.strip():
         raise HTTPException(status_code=400, detail="No text provided to summarize.")
@@ -172,7 +182,7 @@ async def summarize(body: TextResponse):
     _require_google_key()
 
     try:
-        summary = await summarize_text(body.text)
+        summary = await summarize_text(body.text, body.lang)
     except Exception as exc:
         logger.exception("Summarization failed")
         raise HTTPException(status_code=500, detail=_handle_api_error(exc))
@@ -181,7 +191,7 @@ async def summarize(body: TextResponse):
 
 
 @app.post("/api/podcast", response_model=PodcastResponse, summary="Generate podcast from summary")
-async def podcast(body: SummaryResponse):
+async def podcast(body: PodcastRequest):
     """Convert a document summary into a podcast script and generate audio."""
     if not body.summary.strip():
         raise HTTPException(status_code=400, detail="No summary provided.")
@@ -189,8 +199,8 @@ async def podcast(body: SummaryResponse):
     _require_google_key()
 
     try:
-        script = await generate_podcast_script(body.summary)
-        audio_path = await generate_audio(script)
+        script = await generate_podcast_script(body.summary, body.lang)
+        audio_path = await generate_audio(script, body.lang)
         audio_url = f"/audio/{audio_path.name}"
     except Exception as exc:
         logger.exception("Podcast generation failed")

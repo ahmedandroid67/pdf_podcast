@@ -31,21 +31,21 @@ export async function fetchPdfUrl(url) {
 }
 
 /** Summarize extracted text → { summary } */
-export async function summarizeText(text) {
+export async function summarizeText(text, lang = 'en') {
   const res = await fetch(`${BASE}/summarize`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, lang }),
   });
   return handleResponse(res);
 }
 
 /** Generate podcast script + audio from summary → { script, audio_url } */
-export async function generatePodcast(summary) {
+export async function generatePodcast(summary, lang = 'en') {
   const res = await fetch(`${BASE}/podcast`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ summary }),
+    body: JSON.stringify({ summary, lang }),
   });
   return handleResponse(res);
 }

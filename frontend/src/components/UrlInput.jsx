@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function UrlInput({ onUrl, disabled }) {
+  const { t } = useTranslation();
   const [value, setValue] = useState('');
 
   const submit = () => {
@@ -9,7 +11,7 @@ export default function UrlInput({ onUrl, disabled }) {
     try {
       new URL(trimmed); // validate
     } catch {
-      alert('Please enter a valid URL.');
+      alert(t('error_valid_url'));
       return;
     }
     onUrl(trimmed);
@@ -21,7 +23,7 @@ export default function UrlInput({ onUrl, disabled }) {
         id="pdf-url-input"
         type="url"
         className="input-field"
-        placeholder="https://example.com/document.pdf"
+        placeholder={t('url_placeholder')}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && !disabled && submit()}
@@ -35,7 +37,7 @@ export default function UrlInput({ onUrl, disabled }) {
         disabled={disabled || !value.trim()}
         style={{ whiteSpace: 'nowrap' }}
       >
-        Load URL
+        {t('url_button')}
       </button>
     </div>
   );

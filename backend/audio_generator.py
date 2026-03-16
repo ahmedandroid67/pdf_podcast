@@ -10,11 +10,17 @@ logger = logging.getLogger(__name__)
 AUDIO_DIR = Path(__file__).parent / "static" / "audio"
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
-async def generate_audio(text: str, voice: str = "en-US-AndrewNeural") -> Path:
+async def generate_audio(text: str, lang: str = "en") -> Path:
     """
     Generate audio from text using Microsoft Edge TTS (Free).
-    Popular high-quality voices: en-US-AndrewNeural, en-GB-SoniaNeural, en-US-EmmaNeural
     """
+    voices = {
+        "en": "en-US-AndrewNeural",
+        "fr": "fr-FR-HenriNeural",
+        "ar": "ar-EG-ShakirNeural"
+    }
+    voice = voices.get(lang, "en-US-AndrewNeural")
+    
     filename = f"{uuid.uuid4()}.mp3"
     filepath = AUDIO_DIR / filename
     
@@ -25,7 +31,7 @@ async def generate_audio(text: str, voice: str = "en-US-AndrewNeural") -> Path:
         communicate = edge_tts.Communicate(clean_text, voice)
         await communicate.save(str(filepath))
         
-        logger.info(f"Generated free audio: {filepath}")
+        logger.info(f"Generated free audio ({lang}): {filepath}")
         return filepath
     except Exception as e:
         logger.error(f"Edge-TTS generation failed: {e}")

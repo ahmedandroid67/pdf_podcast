@@ -1,13 +1,17 @@
+import { useTranslation } from 'react-i18next';
+
 /** Visual progress stepper shown across the top of the pipeline */
 const STEPS = [
-  { label: 'Upload PDF' },
-  { label: 'Extract Text' },
-  { label: 'Summarize' },
-  { label: 'Podcast' },
-  { label: 'Audio' },
+  { key: 'step_upload' },
+  { key: 'step_extract' },
+  { key: 'step_summarize' },
+  { key: 'step_podcast' },
+  { key: 'step_audio' },
 ];
 
 export default function PipelineStepper({ currentStep }) {
+  const { t } = useTranslation();
+
   return (
     <div
       role="list"
@@ -53,7 +57,7 @@ export default function PipelineStepper({ currentStep }) {
                   transition: 'color 0.3s',
                 }}
               >
-                {step.label}
+                {t(step.key)}
               </span>
             </div>
 

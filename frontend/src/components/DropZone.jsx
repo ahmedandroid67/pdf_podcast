@@ -1,15 +1,17 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const ACCEPTED = 'application/pdf';
 
 export default function DropZone({ onFile, disabled }) {
+  const { t } = useTranslation();
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
   const handleFile = (file) => {
     if (!file) return;
     if (file.type !== ACCEPTED && !file.name.endsWith('.pdf')) {
-      alert('Please select a PDF file.');
+      alert(t('error_pdf_only'));
       return;
     }
     onFile(file);
@@ -26,7 +28,7 @@ export default function DropZone({ onFile, disabled }) {
       id="drop-zone"
       role="button"
       tabIndex={0}
-      aria-label="Upload PDF by clicking or dragging"
+      aria-label={t('drop_zone_title')}
       onClick={() => !disabled && inputRef.current?.click()}
       onKeyDown={(e) => e.key === 'Enter' && !disabled && inputRef.current?.click()}
       onDragOver={(e) => { e.preventDefault(); if (!disabled) setDragging(true); }}
@@ -46,11 +48,14 @@ export default function DropZone({ onFile, disabled }) {
       {/* Icon */}
       <div style={{ fontSize: '2.6rem', marginBottom: '12px', lineHeight: 1 }}>📄</div>
       <p style={{ color: 'var(--text-1)', fontWeight: 600, marginBottom: '4px' }}>
-        Drop your PDF here
+        {t('drop_zone_title')}
       </p>
-      <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
-        or <span style={{ color: 'var(--brand-from)', textDecoration: 'underline' }}>browse files</span>
-      </p>
+      <div style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
+        <span>{t('drop_zone_subtitle').split(' ')[0]} </span>
+        <span style={{ color: 'var(--brand-from)', textDecoration: 'underline' }}>
+          {t('drop_zone_subtitle').split(' ').slice(1).join(' ')}
+        </span>
+      </div>
       <input
         ref={inputRef}
         id="pdf-file-input"

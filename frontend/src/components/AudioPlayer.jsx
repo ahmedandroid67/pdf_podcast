@@ -1,7 +1,9 @@
 import { useRef, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import WaveformBars from './WaveformBars';
 
 export default function AudioPlayer({ audioUrl, script }) {
+  const { t } = useTranslation();
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -59,9 +61,9 @@ export default function AudioPlayer({ audioUrl, script }) {
         </div>
         <div>
           <p style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: '1rem' }}>
-            Podcast Episode
+            {t('audio_episode')}
           </p>
-          <p style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>AI-Generated Narration</p>
+          <p style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>{t('audio_narration')}</p>
         </div>
         <div style={{ marginLeft: 'auto' }}>
           <WaveformBars playing={playing} />
@@ -111,9 +113,9 @@ export default function AudioPlayer({ audioUrl, script }) {
           className="btn-secondary"
           style={{ padding: '10px 14px' }}
           onClick={() => { if (audioRef.current) audioRef.current.currentTime -= 10; }}
-          aria-label="Rewind 10 seconds"
+          aria-label={t('audio_rewind')}
         >
-          ⏪ 10s
+          {t('audio_rewind')}
         </button>
 
         {/* Play / Pause */}
@@ -122,9 +124,9 @@ export default function AudioPlayer({ audioUrl, script }) {
           className="btn-primary"
           style={{ padding: '12px 32px', fontSize: '1.1rem' }}
           onClick={toggle}
-          aria-label={playing ? 'Pause podcast' : 'Play podcast'}
+          aria-label={playing ? t('audio_pause') : t('audio_play')}
         >
-          {playing ? '⏸ Pause' : '▶ Play'}
+          {playing ? t('audio_pause') : t('audio_play')}
         </button>
 
         {/* Forward 10s */}
@@ -133,9 +135,9 @@ export default function AudioPlayer({ audioUrl, script }) {
           className="btn-secondary"
           style={{ padding: '10px 14px' }}
           onClick={() => { if (audioRef.current) audioRef.current.currentTime += 10; }}
-          aria-label="Forward 10 seconds"
+          aria-label={t('audio_forward')}
         >
-          10s ⏩
+          {t('audio_forward')}
         </button>
       </div>
 
@@ -146,7 +148,7 @@ export default function AudioPlayer({ audioUrl, script }) {
         download
         style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--brand-from)', textDecoration: 'none' }}
       >
-        ⬇ Download MP3
+        {t('audio_download')}
       </a>
 
       {/* Podcast script */}
@@ -155,7 +157,7 @@ export default function AudioPlayer({ audioUrl, script }) {
           <summary
             style={{ cursor: 'pointer', color: 'var(--text-2)', fontSize: '0.88rem', userSelect: 'none', outline: 'none' }}
           >
-            📜 View podcast script
+            {t('audio_view_script')}
           </summary>
           <div
             style={{
