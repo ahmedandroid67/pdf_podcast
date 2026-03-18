@@ -41,8 +41,9 @@ services:
       - POSTGRES_DB=postgres
     volumes:
       - db_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+# No need to expose DB port to host in Coolify
+    # ports:
+    #   - "5432:5432"
 
 volumes:
   audio_data:
