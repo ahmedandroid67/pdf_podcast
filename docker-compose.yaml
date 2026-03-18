@@ -7,10 +7,10 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - backend
-    # Port for manual access (via IP)
-    ports:
-      - "3015:80"
-    # Labels for Coolify (Traefik) to route the domain to the frontend
+    # Port for manual access (via host IP) is not needed when using Coolify with a domain.
+    # Coolify routes directly to the container's port 80.
+    # ports:
+    #   - "3015:80"
     labels:
       - "coolify.managed=true"
       - "coolify.service.type=compose"
@@ -29,8 +29,9 @@ services:
       - storage_data:/app/storage
     depends_on:
       - db
-    ports:
-      - "8000:8000"
+    # Port 8000 is not needed externally as the frontend Nginx proxies to it internally.
+    # ports:
+    #   - "8000:8000"
     restart: always
 
   db:
@@ -41,7 +42,7 @@ services:
       - POSTGRES_DB=postgres
     volumes:
       - db_data:/var/lib/postgresql/data
-# No need to expose DB port to host in Coolify
+    # No need to expose DB port to host in Coolify.
     # ports:
     #   - "5432:5432"
 
