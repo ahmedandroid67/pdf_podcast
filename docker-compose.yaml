@@ -20,11 +20,31 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env
     environment:
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
     volumes:
       - audio_data:/app/static/audio
+      - storage_data:/app/storage
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
     restart: always
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
 volumes:
   audio_data:
+  storage_data:
+  db_data:

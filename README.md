@@ -1292,3 +1292,19 @@ MIT - Use freely, modify as needed, contribute back if you can.
 ---
 
 **Star this repo if it helps. Read both guides. Build something great.**
+
+BACKEND
+cd C:\Users\Ahmed\Desktop\PdfParser\backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+FRONTEND
+cd C:\Users\Ahmed\Desktop\PdfParser\frontend
+npm install
+npm run dev
+
+
+
+

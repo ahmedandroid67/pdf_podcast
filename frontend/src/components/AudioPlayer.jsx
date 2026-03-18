@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import { API_BASE } from '../api';
 import { useTranslation } from 'react-i18next';
 import WaveformBars from './WaveformBars';
 
@@ -9,12 +10,56 @@ export default function AudioPlayer({ audioUrl, script }) {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [resolvedUrl, setResolvedUrl] = useState('');
 
   useEffect(() => {
     // Reset when URL changes
     setPlaying(false);
     setProgress(0);
     setCurrentTime(0);
+  }, [audioUrl]);
+
+  useEffect(() => {
+    let active = true;
+    let objectUrl = '';
+
+    const loadAudio = async () => {
+      if (!audioUrl) {
+        setResolvedUrl('');
+        return;
+      }
+      if (!audioUrl.startsWith('/api/audio')) {
+        setResolvedUrl(audioUrl);
+        return;
+      }
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(`${API_BASE}${audioUrl}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) {
+          throw new Error('Failed to load audio');
+        }
+        const blob = await res.blob();
+        objectUrl = URL.createObjectURL(blob);
+        if (active) {
+          setResolvedUrl(objectUrl);
+        }
+      } catch {
+        if (active) {
+          setResolvedUrl('');
+        }
+      }
+    };
+
+    loadAudio();
+
+    return () => {
+      active = false;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
   }, [audioUrl]);
 
   const toggle = () => {
@@ -73,7 +118,7 @@ export default function AudioPlayer({ audioUrl, script }) {
       {/* Native audio (hidden) */}
       <audio
         ref={audioRef}
-        src={audioUrl}
+        src={resolvedUrl}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => { setPlaying(false); setProgress(0); setCurrentTime(0); }}
@@ -144,7 +189,7 @@ export default function AudioPlayer({ audioUrl, script }) {
       {/* Download link */}
       <a
         id="download-audio-link"
-        href={audioUrl}
+        href={resolvedUrl}
         download
         style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--brand-from)', textDecoration: 'none' }}
       >

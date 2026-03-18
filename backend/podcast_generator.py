@@ -48,7 +48,8 @@ async def generate_podcast_script(summary: str, lang: str = "en", mode: str = "p
         # Run the synchronous generate_content in a separate thread to avoid blocking
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(None, lambda: model.generate_content(prompt))
-        return response.text
+        tokens = response.usage_metadata.total_token_count
+        return response.text, tokens
     except Exception as e:
         logger.error(f"Gemini Script Generation failed: {e}")
         raise

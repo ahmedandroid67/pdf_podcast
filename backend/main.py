@@ -7,18 +7,28 @@ import logging
 import os
 from pathlib import Path
 
-
-
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, HttpUrl
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from sqlalchemy.orm import Session
 
-from audio_generator import AUDIO_DIR, delete_audio_file, generate_audio, list_audio_files
-from pdf_parser import extract_text_from_bytes, extract_text_from_url
+from auth.auth_dependencies import get_current_user
+from auth.auth_router import router as auth_router
+from database.database import engine, get_db
+from database.models import Base
+from jobs.job_router import router as job_router
+from jobs.job_service import create_job, update_job_completed, update_job_failed
+from middleware.quota_limit import check_user_quota, increment_usage
+from middleware.rate_limit import limiter
 from podcast_generator import generate_podcast_script
 from summarizer import summarize_text
+from utils.file_validation import PdfValidationError, validate_pdf_bytes
+from pdf_parser import extract_text_from_bytes, extract_text_from_url
+from audio_generator import generate_audio
+from services.audio_service import store_audio_file
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -36,24 +46,41 @@ app = FastAPI(
     version="1.0.0",
 )
 
+
 @app.get("/", summary="API Root")
 async def root():
     return {
         "message": "Welcome to the PDF Podcast Summarizer API",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
     }
 
+
+cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+if not cors_origins or cors_origins == [""]:
+    cors_origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[origin.strip() for origin in cors_origins],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Serve generated audio files statically
-AUDIO_DIR.mkdir(exist_ok=True)
-app.mount("/audio", StaticFiles(directory=str(AUDIO_DIR)), name="audio")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
+Base.metadata.create_all(bind=engine)
+
+import traceback
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def debug_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc), "trace": traceback.format_exc()}
+    )
 
 # ---------------------------------------------------------------------------
 # Request / Response models
@@ -87,67 +114,7 @@ class PodcastRequest(BaseModel):
 class PodcastResponse(BaseModel):
     script: str
     audio_url: str
-
-
-class FullPipelineResponse(BaseModel):
-    text: str
-    summary: str
-    script: str
-    audio_url: str
-
-
-# ---------------------------------------------------------------------------
-# Phase 1 – PDF ingestion endpoints
-# ---------------------------------------------------------------------------
-
-
-@app.post("/api/upload", response_model=TextResponse, summary="Upload a PDF and extract text")
-async def upload_pdf(file: UploadFile = File(...)):
-    """Accept a PDF file upload and return the extracted plain text."""
-    if file.content_type not in ("application/pdf", "application/octet-stream") and not (
-        file.filename or ""
-    ).endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
-
-    pdf_bytes = await file.read()
-    if not pdf_bytes:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
-
-    logger.info("Received PDF for upload: %s (%d bytes)", file.filename, len(pdf_bytes))
-    try:
-        logger.info("Starting text extraction...")
-        text, page_count, is_scanned = extract_text_from_bytes(pdf_bytes)
-        logger.info("Extraction complete. Text length: %d, Pages: %d, Scanned: %s", len(text), page_count, is_scanned)
-    except Exception as exc:
-        logger.exception("Failed to extract text from uploaded file")
-        raise HTTPException(status_code=422, detail=f"Could not parse PDF: {exc}") from exc
-
-    if not text:
-        logger.warning("No text extracted from PDF.")
-        if is_scanned:
-            msg = f"This document ({page_count} pages) appears to be a scanned image. We currently only support digital PDFs with readable text."
-        else:
-            msg = f"No readable text found. (File has {page_count} pages). Please ensure the PDF is not empty or corrupted."
-        raise HTTPException(status_code=422, detail=msg)
-
-    return TextResponse(text=text)
-
-
-@app.post("/api/url", response_model=TextResponse, summary="Provide a PDF URL and extract text")
-async def pdf_from_url(body: UrlRequest):
-    """Download a PDF from a URL and return the extracted plain text."""
-    logger.info("Received URL for processing: %s", body.url)
-    try:
-        text, page_count, is_scanned = await extract_text_from_url(str(body.url))
-        logger.info("URL processing complete. Text length: %d", len(text))
-    except Exception as exc:
-        logger.exception("Failed to download or parse PDF from URL")
-        raise HTTPException(status_code=422, detail=f"Could not fetch/parse PDF: {exc}") from exc
-
-    if not text.strip():
-        raise HTTPException(status_code=422, detail="No readable text found in the PDF.")
-
-    return TextResponse(text=text)
+    job_id: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -177,8 +144,92 @@ def _handle_api_error(exc: Exception) -> str:
     return f"Free AI Service error: {str(exc)}"
 
 
+# ---------------------------------------------------------------------------
+# Phase 1 – PDF ingestion endpoints
+# ---------------------------------------------------------------------------
+
+
+@app.post("/api/upload", response_model=TextResponse, summary="Upload a PDF and extract text")
+async def upload_pdf(
+    file: UploadFile = File(...),
+    current_user=Depends(get_current_user),
+):
+    """Accept a PDF file upload and return the extracted plain text."""
+    if file.content_type not in ("application/pdf", "application/octet-stream") and not (
+        file.filename or ""
+    ).endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+
+    pdf_bytes = await file.read()
+    if not pdf_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    logger.info("Received PDF for upload: %s (%d bytes)", file.filename, len(pdf_bytes))
+    try:
+        validate_pdf_bytes(pdf_bytes, max_size_mb=20, max_pages=100, require_text=True)
+    except PdfValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    try:
+        logger.info("Starting text extraction...")
+        text, page_count, is_scanned = extract_text_from_bytes(pdf_bytes)
+        logger.info(
+            "Extraction complete. Text length: %d, Pages: %d, Scanned: %s",
+            len(text),
+            page_count,
+            is_scanned,
+        )
+    except Exception as exc:
+        logger.exception("Failed to extract text from uploaded file")
+        raise HTTPException(status_code=422, detail=f"Could not parse PDF: {exc}") from exc
+
+    if not text:
+        logger.warning("No text extracted from PDF.")
+        if is_scanned:
+            msg = (
+                f"This document ({page_count} pages) appears to be a scanned image. "
+                "We currently only support digital PDFs with readable text."
+            )
+        else:
+            msg = (
+                f"No readable text found. (File has {page_count} pages). "
+                "Please ensure the PDF is not empty or corrupted."
+            )
+        raise HTTPException(status_code=422, detail=msg)
+
+    return TextResponse(text=text)
+
+
+@app.post("/api/url", response_model=TextResponse, summary="Provide a PDF URL and extract text")
+async def pdf_from_url(
+    body: UrlRequest,
+    current_user=Depends(get_current_user),
+):
+    """Download a PDF from a URL and return the extracted plain text."""
+    logger.info("Received URL for processing: %s", body.url)
+    try:
+        text, page_count, is_scanned = await extract_text_from_url(str(body.url))
+        logger.info("URL processing complete. Text length: %d", len(text))
+    except Exception as exc:
+        logger.exception("Failed to download or parse PDF from URL")
+        raise HTTPException(status_code=422, detail=f"Could not fetch/parse PDF: {exc}") from exc
+
+    if not text.strip():
+        raise HTTPException(status_code=422, detail="No readable text found in the PDF.")
+
+    return TextResponse(text=text)
+
+
+# ---------------------------------------------------------------------------
+# Summarization endpoints (protected)
+# ---------------------------------------------------------------------------
+
+
 @app.post("/api/summarize", response_model=SummaryResponse, summary="Summarize extracted text")
-async def summarize(body: SummaryRequest):
+async def summarize(
+    body: SummaryRequest,
+    current_user=Depends(get_current_user),
+):
     """Accept raw document text and return an AI-generated summary."""
     if not body.text.strip():
         raise HTTPException(status_code=400, detail="No text provided to summarize.")
@@ -186,7 +237,9 @@ async def summarize(body: SummaryRequest):
     _require_google_key()
 
     try:
-        summary = await summarize_text(body.text, body.lang, body.mode)
+        summary, tokens = await summarize_text(body.text, body.lang, body.mode)
+        # Note: We could increment usage here too if we want to charge for summaries
+        increment_usage(current_user, db, tokens)
     except Exception as exc:
         logger.exception("Summarization failed")
         raise HTTPException(status_code=500, detail=_handle_api_error(exc))
@@ -195,7 +248,11 @@ async def summarize(body: SummaryRequest):
 
 
 @app.post("/api/podcast", response_model=PodcastResponse, summary="Generate podcast from summary")
-async def podcast(body: PodcastRequest):
+async def podcast(
+    body: PodcastRequest,
+    current_user=Depends(check_user_quota),
+    db: Session = Depends(get_db),
+):
     """Convert a document summary into a podcast script and generate audio."""
     if not body.summary.strip():
         raise HTTPException(status_code=400, detail="No summary provided.")
@@ -203,106 +260,39 @@ async def podcast(body: PodcastRequest):
     _require_google_key()
 
     try:
-        script = await generate_podcast_script(body.summary, body.lang, body.mode)
+        script, tokens = await generate_podcast_script(body.summary, body.lang, body.mode)
         audio_path = await generate_audio(script, body.lang)
-        audio_url = f"/audio/{audio_path.name}"
+
+        job = create_job(
+            db,
+            str(current_user.id),
+            "summary.txt",
+            0,
+            body.mode,
+        )
+        storage_dir = Path(__file__).resolve().parent / "storage" / str(current_user.id) / str(job.id)
+        stored_audio = store_audio_file(audio_path, storage_dir)
+        job = update_job_completed(db, job, stored_audio)
+        job.tokens_used = tokens
+        db.add(job)
+        increment_usage(current_user, db, tokens)
+        audio_url = f"/api/audio/{job.id}"
     except Exception as exc:
         logger.exception("Podcast generation failed")
+        if "job" in locals():
+            update_job_failed(db, job)
         raise HTTPException(status_code=500, detail=_handle_api_error(exc))
 
-    return PodcastResponse(script=script, audio_url=audio_url)
+    return PodcastResponse(script=script, audio_url=audio_url, job_id=str(job.id))
 
 
-# ---------------------------------------------------------------------------
-# Full pipeline – single endpoint for the whole workflow
-# ---------------------------------------------------------------------------
+from auth.admin_router import router as admin_router
 
-
-@app.post(
-    "/api/process/upload",
-    response_model=FullPipelineResponse,
-    summary="Full pipeline: upload PDF → summarize → generate podcast",
-)
-async def process_upload(file: UploadFile = File(...)):
-    """One-shot endpoint: upload a PDF, get back text, summary, script, and audio."""
-    _require_google_key()
-    pdf_bytes = await file.read()
-    if not pdf_bytes:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
-
-    try:
-        text, page_count, is_scanned = extract_text_from_bytes(pdf_bytes)
-        if not text:
-            msg = "Could not extract text."
-            if is_scanned:
-                msg = "Document appears to be a scanned image."
-            raise ValueError(msg)
-            
-        summary = await summarize_text(text)
-        script = await generate_podcast_script(summary)
-        audio_path = await generate_audio(script)
-    except Exception as exc:
-        logger.exception("Full pipeline failed (upload)")
-        raise HTTPException(status_code=500, detail=_handle_api_error(exc))
-
-    return FullPipelineResponse(
-        text=text,
-        summary=summary,
-        script=script,
-        audio_url=f"/audio/{audio_path.name}",
-    )
-
-
-@app.post(
-    "/api/process/url",
-    response_model=FullPipelineResponse,
-    summary="Full pipeline: PDF URL → summarize → generate podcast",
-)
-async def process_url(body: UrlRequest):
-    """One-shot endpoint: provide a PDF URL, get back text, summary, script, and audio."""
-    _require_google_key()
-    try:
-        text, page_count, is_scanned = await extract_text_from_url(str(body.url))
-        if not text:
-            raise ValueError("No text found in PDF.")
-            
-        summary = await summarize_text(text)
-        script = await generate_podcast_script(summary)
-        audio_path = await generate_audio(script)
-    except Exception as exc:
-        logger.exception("Full pipeline failed (URL)")
-        raise HTTPException(status_code=500, detail=_handle_api_error(exc))
-
-    return FullPipelineResponse(
-        text=text,
-        summary=summary,
-        script=script,
-        audio_url=f"/audio/{audio_path.name}",
-    )
-
-
-# ---------------------------------------------------------------------------
-# Utility endpoints
-# ---------------------------------------------------------------------------
-
-
-@app.get("/api/audio", summary="List generated audio files")
-async def get_audio_list():
-    return {"files": list_audio_files()}
-
-
-@app.delete("/api/audio/{filename}", summary="Delete an audio file")
-async def remove_audio(filename: str):
-    if not delete_audio_file(filename):
-        raise HTTPException(status_code=404, detail="File not found.")
-    return {"deleted": filename}
+app.include_router(auth_router)
+app.include_router(job_router)
+app.include_router(admin_router)
 
 
 @app.get("/health")
 async def health():
     return {"status": "ok"}
-
-
-# Static files serving setup
-AUDIO_DIR.mkdir(parents=True, exist_ok=True)
-app.mount("/audio", StaticFiles(directory=str(AUDIO_DIR)), name="audio")
