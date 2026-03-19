@@ -11,6 +11,10 @@ class UserLogin(BaseModel):
     password: str
 
 
+class UserChangePassword(BaseModel):
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 from uuid import UUID
 
 class UserRead(BaseModel):

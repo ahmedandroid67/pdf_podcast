@@ -16,7 +16,9 @@ import {
 
 const PLAN_COLORS = {
   free: '#6366f1',
+  basic: '#10b981',
   pro: '#f59e0b',
+  business: '#ec4899',
 };
 
 const statCard = (icon, label, value, accent) => (
@@ -148,7 +150,9 @@ function UserForm({ initial = {}, onSave, loading }) {
       <label style={labelStyle}>Plan</label>
       <select style={inputStyle} value={plan} onChange={e => setPlan(e.target.value)}>
         <option value="free">Free</option>
+        <option value="basic">Basic</option>
         <option value="pro">Pro</option>
+        <option value="business">Business</option>
       </select>
       <label style={labelStyle}>Daily Quota</label>
       <input style={inputStyle} type="number" min={0} max={1000} value={quota} onChange={e => setQuota(e.target.value)} required />
@@ -226,6 +230,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   // Modal states
   const [editUser, setEditUser] = useState(null);
@@ -250,20 +255,32 @@ export default function AdminDashboard() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    if (success) {
+      const t = setTimeout(() => setSuccess(''), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [success]);
+
   const handleToggleStatus = async (u) => {
     try {
       const updated = await adminToggleUserStatus(u.id);
       setUsers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      setSuccess(`User ${u.email} is now ${updated.is_active ? 'Active' : 'Inactive'}.`);
     } catch (e) { setError(e.message); }
   };
 
   const handleDelete = async () => {
     if (!confirmDelete) return;
     setActionLoading(true);
+    setSuccess('');
+    setError('');
     try {
       await adminDeleteUser(confirmDelete.id);
+      const deletedEmail = confirmDelete.email;
       setUsers((prev) => prev.filter((x) => x.id !== confirmDelete.id));
       setConfirmDelete(null);
+      setSuccess(`User ${deletedEmail} deleted permanently.`);
       load();
     } catch (e) { setError(e.message); }
     finally { setActionLoading(false); }
@@ -272,19 +289,25 @@ export default function AdminDashboard() {
   const handleSaveEdit = async (payload) => {
     if (!editUser) return;
     setActionLoading(true);
+    setSuccess('');
+    setError('');
     try {
       const updated = await adminUpdateUser(editUser.id, payload);
       setUsers((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
       setEditUser(null);
+      setSuccess(`User ${updated.email} updated successfully!`);
     } catch (e) { setError(e.message); }
     finally { setActionLoading(false); }
   };
 
   const handleCreate = async (payload) => {
     setActionLoading(true);
+    setSuccess('');
+    setError('');
     try {
       await adminCreateUser(payload);
       setShowAddModal(false);
+      setSuccess(`User ${payload.email} created successfully!`);
       load();
     } catch (e) { setError(e.message); }
     finally { setActionLoading(false); }
@@ -293,10 +316,12 @@ export default function AdminDashboard() {
   const handleResetPassword = async (newPassword) => {
     if (!resetPasswordUser) return;
     setActionLoading(true);
+    setSuccess('');
+    setError('');
     try {
       await adminResetPassword(resetPasswordUser.id, newPassword);
+      setSuccess(`Password for ${resetPasswordUser.email} reset successfully.`);
       setResetPasswordUser(null);
-      alert('Password reset successfully');
     } catch (e) {
       setError(e.message);
     } finally {
@@ -306,9 +331,11 @@ export default function AdminDashboard() {
 
   const handleBulkDelete = async () => {
     setActionLoading(true);
+    setSuccess('');
+    setError('');
     try {
       const res = await adminBulkDeleteOldUsers();
-      alert(res.message);
+      setSuccess(res.message || 'Bulk cleanup completed successfully.');
       load();
     } catch (err) {
       setError(err.message || 'Bulk delete failed');
@@ -350,9 +377,16 @@ export default function AdminDashboard() {
 
         {/* Error banner */}
         {error && (
-          <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '12px 18px', borderRadius: 10, marginBottom: 20, fontSize: '0.9rem' }}>
-            ⚠️ {error}
-            <button onClick={() => setError('')} style={{ float: 'right', background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }}>✕</button>
+          <div className="fade-up" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '12px 18px', borderRadius: 10, marginBottom: 20, fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>⚠️ {error}</span>
+            <button onClick={() => setError('')} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
+          </div>
+        )}
+
+        {success && (
+          <div className="fade-up" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', color: '#34d399', padding: '12px 18px', borderRadius: 10, marginBottom: 20, fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>✅ {success}</span>
+            <button onClick={() => setSuccess('')} style={{ background: 'none', border: 'none', color: '#34d399', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
           </div>
         )}
 

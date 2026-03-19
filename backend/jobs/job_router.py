@@ -50,6 +50,13 @@ def get_job(
     return job
 
 
+from utils.plan_utils import (
+    can_upload_pdf, 
+    can_generate_podcast, 
+    can_store_more_jobs, 
+    get_user_plan_limits
+)
+
 @router.post("/process/upload")
 @limiter.limit("10/minute")
 async def process_upload(
@@ -65,11 +72,33 @@ async def process_upload(
     ).endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
 
+    # 1. Check if plan allows podcast generation
+    if mode == "podcast":
+        ok, err = can_generate_podcast(current_user)
+        if not ok:
+            raise HTTPException(status_code=403, detail=err)
+
+    # 2. Check storage limit
+    ok, err = can_store_more_jobs(current_user, db)
+    if not ok:
+        raise HTTPException(status_code=403, detail=err)
+
     pdf_bytes = await file.read()
+    
+    # 3. Check plan limits: size and pages
+    limits = get_user_plan_limits(current_user)
     try:
-        validate_pdf_bytes(pdf_bytes, max_size_mb=20, max_pages=100, require_text=True)
+        page_count, is_encrypted = validate_pdf_bytes(
+            pdf_bytes, 
+            max_size_mb=limits.max_size_mb, 
+            max_pages=limits.max_pages, 
+            require_text=True
+        )
     except PdfValidationError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        err_msg = str(exc)
+        if "exceeds" in err_msg.lower():
+            err_msg += f" Upgrade to a higher plan for larger files/more pages."
+        raise HTTPException(status_code=422, detail=err_msg) from exc
 
     job = create_job(
         db,
@@ -85,12 +114,15 @@ async def process_upload(
     input_path.write_bytes(pdf_bytes)
 
     try:
-        text, summary, script, audio_path, _, _ = await run_full_pipeline(
+        text, summary, script, audio_path, tokens_used_summarizer, tokens_used_podcast = await run_full_pipeline(
             pdf_bytes, lang, mode
         )
+        total_tokens = tokens_used_summarizer + tokens_used_podcast
         stored_audio = store_audio_file(audio_path, storage_dir)
         job = update_job_completed(db, job, stored_audio)
-        increment_usage(current_user, db)
+        job.tokens_used = total_tokens
+        db.add(job)
+        increment_usage(current_user, db, total_tokens)
     except Exception as exc:
         update_job_failed(db, job)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -118,6 +150,17 @@ async def process_url(
     if not url:
         raise HTTPException(status_code=400, detail="Missing URL.")
 
+    # 1. Check if plan allows podcast generation
+    if mode == "podcast":
+        ok, err = can_generate_podcast(current_user)
+        if not ok:
+            raise HTTPException(status_code=403, detail=err)
+
+    # 2. Check storage limit
+    ok, err = can_store_more_jobs(current_user, db)
+    if not ok:
+        raise HTTPException(status_code=403, detail=err)
+
     async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client:
         response = await client.get(url)
         response.raise_for_status()
@@ -127,10 +170,21 @@ async def process_url(
         raise HTTPException(status_code=400, detail="URL does not point to a PDF.")
 
     pdf_bytes = response.content
+    
+    # 3. Check plan limits: size and pages
+    limits = get_user_plan_limits(current_user)
     try:
-        validate_pdf_bytes(pdf_bytes, max_size_mb=20, max_pages=100, require_text=True)
+        page_count, is_encrypted = validate_pdf_bytes(
+            pdf_bytes, 
+            max_size_mb=limits.max_size_mb, 
+            max_pages=limits.max_pages, 
+            require_text=True
+        )
     except PdfValidationError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        err_msg = str(exc)
+        if "exceeds" in err_msg.lower():
+            err_msg += f" Upgrade to a higher plan for larger files/more pages."
+        raise HTTPException(status_code=422, detail=err_msg) from exc
 
     job = create_job(
         db,
@@ -146,12 +200,15 @@ async def process_url(
     input_path.write_bytes(pdf_bytes)
 
     try:
-        text, summary, script, audio_path, _, _ = await run_full_pipeline(
+        text, summary, script, audio_path, tokens_used_summarizer, tokens_used_podcast = await run_full_pipeline(
             pdf_bytes, lang, mode
         )
+        total_tokens = tokens_used_summarizer + tokens_used_podcast
         stored_audio = store_audio_file(audio_path, storage_dir)
         job = update_job_completed(db, job, stored_audio)
-        increment_usage(current_user, db)
+        job.tokens_used = total_tokens
+        db.add(job)
+        increment_usage(current_user, db, total_tokens)
     except Exception as exc:
         update_job_failed(db, job)
         raise HTTPException(status_code=500, detail=str(exc)) from exc

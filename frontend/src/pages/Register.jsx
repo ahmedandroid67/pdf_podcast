@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 export default function Register() {
   const { t } = useTranslation();
@@ -36,7 +37,10 @@ export default function Register() {
         background: 'radial-gradient(circle at 80% 0%, rgba(234,179,8,0.16) 0%, transparent 55%), var(--surface)',
       }}
     >
-      <form onSubmit={handleSubmit} className="card" style={{ width: '100%', maxWidth: '420px', padding: '28px' }}>
+      <form onSubmit={handleSubmit} className="card" style={{ width: '100%', maxWidth: '420px', padding: '28px', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
+          <LanguageSelector />
+        </div>
         <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: '1.6rem', marginBottom: '6px' }}>
           {t('register_title')}
         </h1>

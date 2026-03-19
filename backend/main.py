@@ -3,8 +3,11 @@ main.py
 FastAPI application entry point for the PDF Podcast Summarizer.
 """
 
-import logging
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
+import logging
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
@@ -14,6 +17,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy.orm import Session
+from starlette.middleware.sessions import SessionMiddleware
 
 from auth.auth_dependencies import get_current_user
 from auth.auth_router import router as auth_router
@@ -29,9 +33,6 @@ from utils.file_validation import PdfValidationError, validate_pdf_bytes
 from pdf_parser import extract_text_from_bytes, extract_text_from_url
 from audio_generator import generate_audio
 from services.audio_service import store_audio_file
-from dotenv import load_dotenv
-
-load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -40,11 +41,21 @@ logger = logging.getLogger(__name__)
 # App setup
 # ---------------------------------------------------------------------------
 
+from jobs.cleanup_jobs import cleanup_expired_jobs
+
 app = FastAPI(
     title="PDF Podcast Summarizer",
     description="Upload a PDF or provide a URL to get an AI-generated podcast summary.",
     version="1.0.0",
 )
+
+@app.on_event("startup")
+async def on_startup():
+    db = next(get_db())
+    try:
+        cleanup_expired_jobs(db)
+    finally:
+        db.close()
 
 
 @app.get("/", summary="API Root")
@@ -69,6 +80,7 @@ app.add_middleware(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET_KEY"))
 
 Base.metadata.create_all(bind=engine)
 
@@ -149,10 +161,17 @@ def _handle_api_error(exc: Exception) -> str:
 # ---------------------------------------------------------------------------
 
 
+from utils.plan_utils import (
+    can_upload_pdf, 
+    can_generate_podcast, 
+    can_store_more_jobs, 
+    get_user_plan_limits
+)
+
 @app.post("/api/upload", response_model=TextResponse, summary="Upload a PDF and extract text")
 async def upload_pdf(
     file: UploadFile = File(...),
-    current_user=Depends(get_current_user),
+    current_user=Depends(check_user_quota),  # Use check_user_quota for upload too
 ):
     """Accept a PDF file upload and return the extracted plain text."""
     if file.content_type not in ("application/pdf", "application/octet-stream") and not (
@@ -165,36 +184,34 @@ async def upload_pdf(
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
     logger.info("Received PDF for upload: %s (%d bytes)", file.filename, len(pdf_bytes))
+    
+    # 1. Preliminary check: Size
+    limits = get_user_plan_limits(current_user)
+    
     try:
-        validate_pdf_bytes(pdf_bytes, max_size_mb=20, max_pages=100, require_text=True)
+        page_count, is_encrypted = validate_pdf_bytes(
+            pdf_bytes, 
+            max_size_mb=limits.max_size_mb, 
+            max_pages=limits.max_pages, 
+            require_text=True
+        )
     except PdfValidationError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        # Check if the error is due to plan limits and provide upgrade hint
+        err_msg = str(exc)
+        if "exceeds" in err_msg.lower():
+            err_msg += f" Upgrade to a higher plan for larger files/more pages."
+        raise HTTPException(status_code=422, detail=err_msg) from exc
 
     try:
         logger.info("Starting text extraction...")
-        text, page_count, is_scanned = extract_text_from_bytes(pdf_bytes)
-        logger.info(
-            "Extraction complete. Text length: %d, Pages: %d, Scanned: %s",
-            len(text),
-            page_count,
-            is_scanned,
-        )
+        text, final_page_count, is_scanned = extract_text_from_bytes(pdf_bytes)
     except Exception as exc:
         logger.exception("Failed to extract text from uploaded file")
         raise HTTPException(status_code=422, detail=f"Could not parse PDF: {exc}") from exc
 
     if not text:
         logger.warning("No text extracted from PDF.")
-        if is_scanned:
-            msg = (
-                f"This document ({page_count} pages) appears to be a scanned image. "
-                "We currently only support digital PDFs with readable text."
-            )
-        else:
-            msg = (
-                f"No readable text found. (File has {page_count} pages). "
-                "Please ensure the PDF is not empty or corrupted."
-            )
+        msg = "No readable text found. Please ensure the PDF is not a scanned image."
         raise HTTPException(status_code=422, detail=msg)
 
     return TextResponse(text=text)
@@ -203,13 +220,24 @@ async def upload_pdf(
 @app.post("/api/url", response_model=TextResponse, summary="Provide a PDF URL and extract text")
 async def pdf_from_url(
     body: UrlRequest,
-    current_user=Depends(get_current_user),
+    current_user=Depends(check_user_quota),
 ):
     """Download a PDF from a URL and return the extracted plain text."""
     logger.info("Received URL for processing: %s", body.url)
     try:
         text, page_count, is_scanned = await extract_text_from_url(str(body.url))
+        
+        # Check plan limits AFTER download for URL uploads
+        limits = get_user_plan_limits(current_user)
+        if page_count > limits.max_pages:
+            raise HTTPException(
+                status_code=422, 
+                detail=f"PDF exceeds {limits.max_pages} pages limit for your plan. Upgrade for more."
+            )
+            
         logger.info("URL processing complete. Text length: %d", len(text))
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.exception("Failed to download or parse PDF from URL")
         raise HTTPException(status_code=422, detail=f"Could not fetch/parse PDF: {exc}") from exc
@@ -229,6 +257,7 @@ async def pdf_from_url(
 async def summarize(
     body: SummaryRequest,
     current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Accept raw document text and return an AI-generated summary."""
     if not body.text.strip():
@@ -238,7 +267,6 @@ async def summarize(
 
     try:
         summary, tokens = await summarize_text(body.text, body.lang, body.mode)
-        # Note: We could increment usage here too if we want to charge for summaries
         increment_usage(current_user, db, tokens)
     except Exception as exc:
         logger.exception("Summarization failed")
@@ -258,6 +286,16 @@ async def podcast(
         raise HTTPException(status_code=400, detail="No summary provided.")
 
     _require_google_key()
+    
+    # 1. Check if plan allows podcast generation
+    ok, err = can_generate_podcast(current_user)
+    if not ok:
+        raise HTTPException(status_code=403, detail=err)
+    
+    # 2. Check storage limit
+    ok, err = can_store_more_jobs(current_user, db)
+    if not ok:
+        raise HTTPException(status_code=403, detail=err)
 
     try:
         script, tokens = await generate_podcast_script(body.summary, body.lang, body.mode)

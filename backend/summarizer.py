@@ -52,8 +52,7 @@ async def summarize_text(text: str, lang: str = "en", mode: str = "podcast") -> 
         # Run the synchronous generate_content in a separate thread to avoid blocking
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(None, lambda: model.generate_content(prompt))
-        tokens = response.usage_metadata.total_token_count
-        return response.text, tokens
+        return response.text
     except Exception as e:
         logger.error(f"Gemini Summarization failed: {e}")
         raise

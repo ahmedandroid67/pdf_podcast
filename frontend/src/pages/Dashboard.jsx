@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { API_BASE, fetchJobs } from '../api';
+import { API_BASE, fetchJobs, changePassword } from '../api';
 import { useAuth } from '../context/AuthContext';
 import PodcastPipeline from '../components/PodcastPipeline';
 import LanguageSelector from '../components/LanguageSelector';
@@ -50,6 +50,13 @@ export default function Dashboard() {
   const { user, logout } = useAuth();
   const [jobs, setJobs] = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(false);
+  
+  // Password change states
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
   const remainingQuota = user ? Math.max(user.daily_quota - user.used_today, 0) : 0;
 
@@ -60,6 +67,30 @@ export default function Dashboard() {
       setJobs(data);
     } finally {
       setLoadingJobs(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      setPasswordError(t('password_short', 'Password must be at least 8 characters.'));
+      return;
+    }
+    setPasswordLoading(true);
+    setPasswordError('');
+    setPasswordSuccess('');
+    try {
+      await changePassword(newPassword);
+      setPasswordSuccess(t('password_changed', 'Password updated successfully!'));
+      setNewPassword('');
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordSuccess('');
+      }, 2000);
+    } catch (err) {
+      setPasswordError(err.message || t('password_change_failed', 'Failed to update password.'));
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -101,7 +132,15 @@ export default function Dashboard() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <LanguageSelector />
-          <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>{user?.email}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+            <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>{user?.email}</span>
+            <button 
+              onClick={() => setShowPasswordModal(true)} 
+              style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '0.72rem', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              {t('change_password', 'Change password')}
+            </button>
+          </div>
           {user?.is_admin && (
             <Link to="/admin" className="btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 14px', background: 'rgba(245,158,11,0.1)', borderColor: 'rgba(245,158,11,0.3)', color: '#f59e0b' }}>
               🛡️ Admin Panel
@@ -170,6 +209,71 @@ export default function Dashboard() {
           ))}
         </div>
       </main>
+
+      {/* Change Password Modal */}
+      {showPasswordModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          padding: '20px'
+        }}>
+          <div className="card glass d700 fade-in" style={{ maxWidth: '400px', width: '100%', padding: '32px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>{t('change_password', 'Change password')}</h2>
+              <button 
+                onClick={() => setShowPasswordModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: 'var(--text-3)' }}
+              >
+                &times;
+              </button>
+            </div>
+            
+            <form onSubmit={handleChangePassword}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-3)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {t('new_password', 'New password')}
+                </label>
+                <input 
+                  type="password"
+                  className="input"
+                  style={{ width: '100%' }}
+                  placeholder="********"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              {passwordError && (
+                <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', padding: '10px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '16px' }}>
+                  {passwordError}
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#34d399', padding: '10px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '16px' }}>
+                  {passwordSuccess}
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                style={{ width: '100%', padding: '12px' }}
+                disabled={passwordLoading}
+              >
+                {passwordLoading ? t('loading') : t('save_changes', 'Save password')}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

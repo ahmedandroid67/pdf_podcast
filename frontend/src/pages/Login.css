@@ -1,0 +1,1090 @@
+/* ─── Login.css ─────────────────────────────────────────────────────────────
+   Loaded synchronously via import './Login.css' — zero FOUC guaranteed.
+   Scoped to .lp-* classes so nothing leaks into global styles.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&family=Cabinet+Grotesk:wght@300;400;500;700;800&display=swap');
+
+/* ── tokens ── */
+:root {
+    --lp-ink: #0a0812;
+    --lp-ink-2: #150f24;
+    --lp-ink-3: #1e1535;
+    --lp-surface: rgba(255, 255, 255, 0.035);
+    --lp-surface-2: rgba(255, 255, 255, 0.06);
+    --lp-rim: rgba(255, 255, 255, 0.08);
+    --lp-rim-2: rgba(255, 255, 255, 0.14);
+    --lp-text-1: #f0ebff;
+    --lp-text-2: rgba(240, 235, 255, 0.6);
+    --lp-text-3: rgba(240, 235, 255, 0.35);
+    --lp-accent: #c084fc;
+    --lp-accent-2: #818cf8;
+    --lp-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --lp-font-display: 'Fraunces', Georgia, serif;
+    --lp-font-body: 'Cabinet Grotesk', system-ui, sans-serif;
+}
+
+/* ── animations ── */
+@keyframes lp-drift-a {
+    to {
+        transform: translate(60px, 80px) scale(1.1);
+    }
+}
+
+@keyframes lp-drift-b {
+    to {
+        transform: translate(-40px, -60px) scale(0.9);
+    }
+}
+
+@keyframes lp-grain {
+
+    0%,
+    100% {
+        transform: translate(0, 0);
+    }
+
+    20% {
+        transform: translate(-1%, 1%);
+    }
+
+    40% {
+        transform: translate(1%, -1%);
+    }
+
+    60% {
+        transform: translate(-1%, 0);
+    }
+
+    80% {
+        transform: translate(0, 1%);
+    }
+}
+
+@keyframes lp-fade-in-up {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes lp-blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+@keyframes lp-sweep {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+@keyframes lp-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── root shell ── */
+.lp-root {
+    font-family: var(--lp-font-body);
+    background: var(--lp-ink);
+    min-height: 100vh;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ── ambient mesh ── */
+.lp-mesh {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.lp-mesh::before {
+    content: '';
+    position: absolute;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(192, 132, 252, 0.22) 0%, transparent 70%);
+    top: -200px;
+    left: -100px;
+    border-radius: 50%;
+    animation: lp-drift-a 18s ease-in-out infinite alternate;
+}
+
+.lp-mesh::after {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(129, 140, 248, 0.18) 0%, transparent 70%);
+    bottom: -100px;
+    left: 30%;
+    border-radius: 50%;
+    animation: lp-drift-b 14s ease-in-out infinite alternate;
+}
+
+/* ── noise grain ── */
+.lp-grain {
+    position: fixed;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.032;
+    animation: lp-grain 7s steps(2) infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ── layout panels ── */
+.lp-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 64px 72px;
+    position: relative;
+    z-index: 1;
+}
+
+.lp-right {
+    width: 500px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 56px 56px 48px;
+    position: relative;
+    z-index: 1;
+    border-left: 1px solid var(--lp-rim);
+    background: linear-gradient(160deg, rgba(192, 132, 252, 0.04) 0%, transparent 50%);
+}
+
+/* ── brand mark ── */
+.lp-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 72px;
+}
+
+.lp-brand-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--lp-accent), var(--lp-accent-2));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.lp-brand-name {
+    font-family: var(--lp-font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--lp-text-1);
+    letter-spacing: -0.01em;
+}
+
+.lp-brand-name em {
+    font-style: italic;
+    color: var(--lp-accent);
+}
+
+/* ── headline ── */
+.lp-headline {
+    font-family: var(--lp-font-display);
+    font-size: clamp(2.6rem, 4vw, 3.8rem);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--lp-text-1);
+    margin-bottom: 20px;
+}
+
+.lp-headline em {
+    font-style: italic;
+    background: linear-gradient(90deg, var(--lp-accent), var(--lp-accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.lp-sub {
+    font-size: 1.05rem;
+    color: var(--lp-text-2);
+    line-height: 1.7;
+    max-width: 400px;
+    font-weight: 300;
+    margin-bottom: 48px;
+}
+
+/* ── stats row ── */
+.lp-stats {
+    display: flex;
+    margin-bottom: 52px;
+}
+
+.lp-stat {
+    flex: 1;
+    padding: 20px 24px;
+    border-top: 1px solid var(--lp-rim);
+    border-bottom: 1px solid var(--lp-rim);
+    border-right: 1px solid var(--lp-rim);
+    transition: background 0.3s;
+}
+
+.lp-stat:first-child {
+    border-left: 1px solid var(--lp-rim);
+    border-radius: 12px 0 0 12px;
+}
+
+.lp-stat:last-child {
+    border-radius: 0 12px 12px 0;
+}
+
+.lp-stat:hover {
+    background: var(--lp-surface);
+}
+
+.lp-stat-num {
+    font-family: var(--lp-font-display);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--lp-accent);
+    line-height: 1;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+}
+
+.lp-stat-label {
+    font-size: 0.75rem;
+    color: var(--lp-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+}
+
+/* ── features ── */
+.lp-features {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 56px;
+}
+
+.lp-feat {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.9rem;
+    color: var(--lp-text-2);
+    font-weight: 400;
+}
+
+.lp-feat-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-rim);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+/* ── testimonial ── */
+.lp-testimonial {
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-rim);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+}
+
+.lp-testimonial::before {
+    content: '"';
+    font-family: var(--lp-font-display);
+    font-size: 5rem;
+    line-height: 0.6;
+    color: var(--lp-accent);
+    opacity: 0.4;
+    position: absolute;
+    top: 20px;
+    left: 24px;
+}
+
+.lp-testimonial-text {
+    font-size: 0.875rem;
+    color: var(--lp-text-2);
+    line-height: 1.7;
+    font-style: italic;
+    padding-top: 20px;
+    margin-bottom: 16px;
+}
+
+.lp-testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lp-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--lp-ink);
+    flex-shrink: 0;
+}
+
+.lp-author-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--lp-text-1);
+}
+
+.lp-author-role {
+    font-size: 0.75rem;
+    color: var(--lp-text-3);
+}
+
+/* ── form panel ── */
+.lp-form-wrap {
+    width: 100%;
+    max-width: 380px;
+}
+
+.lp-form-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(192, 132, 252, 0.12);
+    border: 1px solid rgba(192, 132, 252, 0.25);
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--lp-accent);
+    margin-bottom: 20px;
+}
+
+.lp-form-tag-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lp-accent);
+    animation: lp-blink 2s ease-in-out infinite;
+}
+
+.lp-form-title {
+    font-family: var(--lp-font-display);
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--lp-text-1);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 8px;
+}
+
+.lp-form-title em {
+    font-style: italic;
+    color: var(--lp-accent);
+}
+
+.lp-form-subtitle {
+    font-size: 0.875rem;
+    color: var(--lp-text-3);
+    margin-bottom: 32px;
+    font-weight: 300;
+}
+
+/* ── google button ── */
+.lp-google-btn {
+    width: 100%;
+    height: 50px;
+    background: var(--lp-surface-2);
+    border: 1px solid var(--lp-rim-2);
+    border-radius: 12px;
+    color: var(--lp-text-1);
+    font-family: var(--lp-font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s var(--lp-ease);
+    margin-bottom: 24px;
+}
+
+.lp-google-btn:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.22);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.lp-google-btn:active {
+    transform: translateY(0);
+}
+
+/* ── divider ── */
+.lp-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.lp-divider::before,
+.lp-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--lp-rim);
+}
+
+.lp-divider span {
+    font-size: 0.75rem;
+    color: var(--lp-text-3);
+    white-space: nowrap;
+}
+
+/* ── form fields ── */
+.lp-field {
+    margin-bottom: 14px;
+}
+
+.lp-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--lp-text-3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.lp-input-wrap {
+    position: relative;
+}
+
+.lp-input {
+    width: 100%;
+    height: 50px;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-rim);
+    border-radius: 12px;
+    padding: 0 44px 0 16px;
+    font-family: var(--lp-font-body);
+    font-size: 0.9rem;
+    color: var(--lp-text-1);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.lp-input:focus {
+    border-color: rgba(192, 132, 252, 0.55);
+    background: rgba(192, 132, 252, 0.06);
+    box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.1);
+}
+
+.lp-input::placeholder {
+    color: var(--lp-text-3);
+}
+
+.lp-input-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--lp-text-3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color 0.2s;
+}
+
+.lp-input-icon:hover {
+    color: var(--lp-text-1);
+}
+
+/* ── bottom row ── */
+.lp-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    margin-top: 6px;
+}
+
+.lp-remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--lp-text-3);
+    cursor: pointer;
+    user-select: none;
+}
+
+.lp-remember input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--lp-accent);
+    cursor: pointer;
+}
+
+.lp-forgot {
+    font-size: 0.82rem;
+    color: var(--lp-accent);
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+.lp-forgot:hover {
+    opacity: 0.7;
+}
+
+/* ── error ── */
+.lp-error {
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.25);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.83rem;
+    color: #fca5a5;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ── submit button ── */
+.lp-submit {
+    width: 100%;
+    height: 52px;
+    background: linear-gradient(135deg, #a855f7, #818cf8);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: var(--lp-font-body);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s var(--lp-ease), box-shadow 0.25s var(--lp-ease);
+    letter-spacing: 0.01em;
+}
+
+.lp-submit::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.18) 50%,
+            transparent 100%);
+    background-size: 200% 100%;
+    animation: lp-sweep 2.5s linear infinite;
+}
+
+.lp-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(168, 85, 247, 0.45);
+}
+
+.lp-submit:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.lp-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ── spinner ── */
+.lp-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: lp-spin 0.7s linear infinite;
+    display: inline-block;
+}
+
+/* ── sign-up link ── */
+.lp-signup {
+    text-align: center;
+    margin-top: 22px;
+    font-size: 0.85rem;
+    color: var(--lp-text-3);
+}
+
+.lp-signup a {
+    color: var(--lp-accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.lp-signup a:hover {
+    text-decoration: underline;
+}
+
+/* ── trust strip ── */
+.lp-trust {
+    margin-top: 32px;
+    padding-top: 28px;
+    border-top: 1px solid var(--lp-rim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.lp-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    color: var(--lp-text-3);
+}
+
+.lp-trust-dot {
+    width: 3px;
+    height: 3px;
+    background: var(--lp-rim-2);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* ── staggered entrance animations ── */
+.fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: lp-fade-in-up 0.6s var(--lp-ease) forwards;
+}
+
+.d100 {
+    animation-delay: 0.10s;
+}
+
+.d200 {
+    animation-delay: 0.20s;
+}
+
+.d300 {
+    animation-delay: 0.30s;
+}
+
+.d400 {
+    animation-delay: 0.40s;
+}
+
+.d500 {
+    animation-delay: 0.50s;
+}
+
+.d600 {
+    animation-delay: 0.60s;
+}
+
+.d700 {
+    animation-delay: 0.70s;
+}
+
+/* ── responsive ── */
+@media (max-width: 1024px) {
+    .lp-left {
+        padding: 48px 40px;
+    }
+
+    .lp-right {
+        width: 440px;
+        padding: 40px 36px;
+    }
+}
+
+@media (max-width: 768px) {
+    .lp-root {
+        flex-direction: column;
+    }
+
+    .lp-left {
+        display: none;
+    }
+
+    .lp-right {
+        width: 100%;
+        min-height: 100vh;
+        border-left: none;
+        padding: 40px 24px;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRICING PANEL — appended to Login.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* override left panel to be a scrollable pricing column */
+.lp-pricing-side {
+    padding: 48px 40px 48px 56px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
+}
+
+.lp-pricing-side::-webkit-scrollbar {
+    width: 4px;
+}
+
+.lp-pricing-side::-webkit-scrollbar-thumb {
+    background: rgba(192, 132, 252, 0.3);
+    border-radius: 99px;
+}
+
+/* pricing heading */
+.lp-pricing-header {
+    margin-bottom: 28px;
+}
+
+.lp-pricing-title {
+    font-family: var(--lp-font-display);
+    font-size: clamp(2rem, 3vw, 2.8rem);
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: var(--lp-text-1);
+    margin-bottom: 10px;
+}
+
+.lp-pricing-title em {
+    font-style: italic;
+    background: linear-gradient(90deg, var(--lp-accent), var(--lp-accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.lp-pricing-sub {
+    font-size: 0.9rem;
+    color: var(--lp-text-3);
+    font-weight: 300;
+    line-height: 1.6;
+}
+
+/* plan cards grid */
+.lp-plans {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.lp-plan-card {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--lp-rim);
+    border-radius: 14px;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s, background 0.25s, transform 0.2s;
+    font-family: var(--lp-font-body);
+}
+
+.lp-plan-card:hover {
+    border-color: var(--lp-rim-2);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(3px);
+}
+
+/* plan color accents */
+.plan-free.lp-plan-active {
+    border-color: rgba(148, 163, 184, 0.5);
+}
+
+.plan-basic.lp-plan-active {
+    border-color: rgba(96, 165, 250, 0.55);
+}
+
+.plan-pro.lp-plan-active {
+    border-color: rgba(192, 132, 252, 0.7);
+}
+
+.plan-business.lp-plan-active {
+    border-color: rgba(251, 191, 36, 0.55);
+}
+
+.lp-plan-highlight {
+    border-color: rgba(192, 132, 252, 0.35);
+    background: rgba(192, 132, 252, 0.05);
+}
+
+/* selected bar (left edge accent) */
+.lp-plan-selected-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 14px 0 0 14px;
+}
+
+.plan-free .lp-plan-selected-bar {
+    background: #94a3b8;
+}
+
+.plan-basic .lp-plan-selected-bar {
+    background: #60a5fa;
+}
+
+.plan-pro .lp-plan-selected-bar {
+    background: linear-gradient(to bottom, #c084fc, #818cf8);
+}
+
+.plan-business .lp-plan-selected-bar {
+    background: #fbbf24;
+}
+
+/* card top row */
+.lp-plan-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    gap: 12px;
+}
+
+.lp-plan-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.lp-plan-icon {
+    font-size: 22px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.lp-plan-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--lp-text-1);
+    line-height: 1.2;
+}
+
+.lp-plan-tag {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lp-text-3);
+    margin-top: 2px;
+}
+
+/* coloured tags for highlighted plans */
+.plan-pro .lp-plan-tag {
+    color: var(--lp-accent);
+}
+
+.plan-basic .lp-plan-tag {
+    color: #60a5fa;
+}
+
+.plan-business .lp-plan-tag {
+    color: #fbbf24;
+}
+
+.lp-plan-price-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
+
+.lp-plan-price {
+    font-family: var(--lp-font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--lp-text-1);
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.plan-pro .lp-plan-price {
+    color: var(--lp-accent);
+}
+
+.lp-plan-period {
+    font-size: 0.68rem;
+    color: var(--lp-text-3);
+    margin-top: 3px;
+}
+
+/* expandable features */
+.lp-plan-features {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lp-plan-features-open {
+    max-height: 600px;
+}
+
+.lp-plan-features-inner {
+    padding: 0 18px 16px 18px;
+    border-top: 1px solid var(--lp-rim);
+    padding-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lp-plan-feat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: var(--lp-text-2);
+    font-weight: 400;
+}
+
+.lp-plan-feat-icon {
+    font-size: 13px;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.lp-plan-limit {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--lp-rim);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--lp-text-3);
+    letter-spacing: 0.04em;
+}
+
+/* footnote */
+.lp-pricing-note {
+    font-size: 0.75rem;
+    color: var(--lp-text-3);
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* ── responsive ── */
+@media (max-width: 1100px) {
+    .lp-pricing-side {
+        padding: 40px 28px;
+    }
+
+    .lp-right {
+        width: 420px;
+        padding: 40px 32px;
+    }
+}
+
+@media (max-width: 768px) {
+    .lp-root {
+        flex-direction: column;
+    }
+
+    .lp-pricing-side {
+        overflow-y: visible;
+        padding: 40px 20px 20px;
+    }
+
+    .lp-right {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--lp-rim);
+        padding: 32px 20px 40px;
+    }
+
+    .lp-plans {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .lp-plans {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── section divider between hero and pricing ── */
+.lp-pricing-block {
+    margin-top: 48px;
+}
+
+.lp-section-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.lp-section-divider::before,
+.lp-section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--lp-rim);
+}
+
+.lp-section-divider span {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lp-text-3);
+    white-space: nowrap;
+}

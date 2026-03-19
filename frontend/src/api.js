@@ -130,6 +130,15 @@ export async function fetchMe() {
   return handleResponse(res);
 }
 
+export async function changePassword(newPassword) {
+  const res = await fetch(`${API_BASE}/auth/change-password`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ new_password: newPassword }),
+  });
+  return handleResponse(res);
+}
+
 // ---- Admin API ----
 
 export async function fetchAdminStats() {
