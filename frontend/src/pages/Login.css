@@ -1100,9 +1100,9 @@
     }
 
     .lp-plans {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 }
 
