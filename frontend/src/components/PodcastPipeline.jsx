@@ -9,7 +9,7 @@ import LanguageSelector from './LanguageSelector';
 import AudioModeSelector from './AudioModeSelector';
 import './PodcastPipeline.css';
 
-const STEP   = { UPLOAD: 0, EXTRACT: 1, SUMMARIZE: 2, PODCAST: 3, AUDIO: 4 };
+const STEP = { UPLOAD: 0, EXTRACT: 1, SUMMARIZE: 2, PODCAST: 3, AUDIO: 4 };
 const STATUS = { IDLE: 'idle', LOADING: 'loading', ERROR: 'error', DONE: 'done' };
 
 const HOW_STEPS = (t) => [
@@ -24,15 +24,15 @@ const HOW_STEPS = (t) => [
 export default function PodcastPipeline({ onJobCreated, embedded = false }) {
   const { t, i18n } = useTranslation();
 
-  const [tab,            setTab]            = useState('file');
-  const [step,           setStep]           = useState(STEP.UPLOAD);
-  const [status,         setStatus]         = useState(STATUS.IDLE);
-  const [error,          setError]          = useState('');
-  const [selectedFile,   setSelectedFile]   = useState(null);
-  const [extractedText,  setExtractedText]  = useState('');
-  const [summary,        setSummary]        = useState('');
-  const [script,         setScript]         = useState('');
-  const [audioUrl,       setAudioUrl]       = useState('');
+  const [tab, setTab] = useState('file');
+  const [step, setStep] = useState(STEP.UPLOAD);
+  const [status, setStatus] = useState(STATUS.IDLE);
+  const [error, setError] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [extractedText, setExtractedText] = useState('');
+  const [summary, setSummary] = useState('');
+  const [script, setScript] = useState('');
+  const [audioUrl, setAudioUrl] = useState('');
   const [processingMode, setProcessingMode] = useState('podcast');
 
   const busy = status === STATUS.LOADING;
@@ -72,13 +72,13 @@ export default function PodcastPipeline({ onJobCreated, embedded = false }) {
   };
 
   const handleFile = (file) => { setSelectedFile(file); runProcess({ type: 'file', file }); };
-  const handleUrl  = (url)  => runProcess({ type: 'url', url });
+  const handleUrl = (url) => runProcess({ type: 'url', url });
 
   /* step label helper */
   const stepLabel = () => {
-    if (step === STEP.EXTRACT)   return t('status_extracting');
+    if (step === STEP.EXTRACT) return t('status_extracting');
     if (step === STEP.SUMMARIZE) return t('status_summarizing');
-    if (step === STEP.PODCAST)   return t('status_generating');
+    if (step === STEP.PODCAST) return t('status_generating');
     return '';
   };
 
