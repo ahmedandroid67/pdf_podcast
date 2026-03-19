@@ -302,6 +302,11 @@ export default function Login() {
       <div className="lp-right">
         <div className="lp-form-wrap">
 
+          <div className="lp-brand lp-only-mobile fade-in d100">
+            <div className="lp-brand-icon">🎙️</div>
+            <div className="lp-brand-name">Pdf<em>Parser</em></div>
+          </div>
+
           <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
              <LanguageSelector />
           </div>

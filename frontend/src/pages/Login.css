@@ -729,6 +729,10 @@
     animation-delay: 0.70s;
 }
 
+.lp-only-mobile {
+    display: none;
+}
+
 /* ── responsive ── */
 @media (max-width: 1024px) {
     .lp-left {
@@ -744,17 +748,44 @@
 @media (max-width: 768px) {
     .lp-root {
         flex-direction: column;
+        overflow-y: auto;
+        height: auto;
+        min-height: 100vh;
     }
 
     .lp-left {
-        display: none;
+        display: flex;
+        flex: none;
+        order: 2; /* Move pricing/features below the form */
+        padding: 48px 24px;
+        border-right: none;
+        border-top: 1px solid var(--lp-rim);
+        overflow-y: visible; /* Let it expand in the column */
     }
 
     .lp-right {
+        order: 1; /* Keep login form at the top */
         width: 100%;
-        min-height: 100vh;
+        padding: 64px 24px 48px;
         border-left: none;
-        padding: 40px 24px;
+        background: linear-gradient(180deg, rgba(192, 132, 252, 0.08) 0%, transparent 100%);
+    }
+
+    .lp-only-mobile {
+        display: flex;
+        margin-bottom: 32px;
+    }
+
+    .lp-brand {
+        margin-bottom: 48px;
+    }
+
+    .lp-headline {
+        font-size: 2.2rem;
+    }
+
+    .lp-pricing-title {
+        font-size: 1.8rem;
     }
 }
 
