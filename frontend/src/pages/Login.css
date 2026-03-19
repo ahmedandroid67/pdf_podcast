@@ -101,7 +101,8 @@
     font-family: var(--lp-font-body);
     background: var(--lp-ink);
     min-height: 100vh;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1.22fr 0.95fr;
     overflow: hidden;
     position: relative;
 }
@@ -151,27 +152,41 @@
     z-index: 0;
 }
 
-/* ── layout panels ── */
-.lp-left {
-    flex: 1;
+/* ── column architecture ── */
+.lp-col {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    padding: 64px 72px;
-    position: relative;
-    z-index: 1;
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(192, 132, 252, 0.2) transparent;
 }
 
-.lp-right {
-    width: 500px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 56px 56px 48px;
-    position: relative;
-    z-index: 1;
-    border-left: 1px solid var(--lp-rim);
+.lp-col::-webkit-scrollbar {
+    width: 4px;
+}
+
+.lp-col::-webkit-scrollbar-thumb {
+    background: rgba(192, 132, 252, 0.2);
+    border-radius: 99px;
+}
+
+.lp-col-info {
+    padding: 64px 56px;
+    border-right: 1px solid var(--lp-rim);
+}
+
+.lp-col-pricing {
+    padding: 64px 52px;
+    background: linear-gradient(180deg, rgba(192, 132, 252, 0.02) 0%, transparent 100%);
+    border-right: 1px solid var(--lp-rim);
+}
+
+.lp-col-form {
+    padding: 64px 56px;
+    align-items: center;
     background: linear-gradient(160deg, rgba(192, 132, 252, 0.04) 0%, transparent 50%);
 }
 
@@ -794,22 +809,7 @@
    PRICING PANEL — appended to Login.css
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* override left panel to be a scrollable pricing column */
-.lp-pricing-side {
-    padding: 48px 40px 48px 56px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
-}
-
-.lp-pricing-side::-webkit-scrollbar {
-    width: 4px;
-}
-
-.lp-pricing-side::-webkit-scrollbar-thumb {
-    background: rgba(192, 132, 252, 0.3);
-    border-radius: 99px;
-}
+/* scrollbar customization - now handled in .lp-col */
 
 /* pricing heading */
 .lp-pricing-header {
@@ -1051,37 +1051,58 @@
 }
 
 /* ── responsive ── */
-@media (max-width: 1100px) {
-    .lp-pricing-side {
-        padding: 40px 28px;
+/* ── responsive ── */
+@media (max-width: 1440px) {
+    .lp-root {
+        grid-template-columns: 1fr 1.3fr 1fr;
     }
+    .lp-col-info, .lp-col-pricing, .lp-col-form {
+        padding: 48px 32px;
+    }
+}
 
-    .lp-right {
-        width: 420px;
-        padding: 40px 32px;
+@media (max-width: 1200px) {
+    .lp-root {
+        grid-template-columns: 1.2fr 1fr;
+    }
+    .lp-col-info {
+        display: none; /* Hide info on smaller desktop to keep pricing and form prominent */
     }
 }
 
 @media (max-width: 768px) {
     .lp-root {
+        display: flex;
         flex-direction: column;
+        overflow-y: auto;
     }
 
-    .lp-pricing-side {
+    .lp-col {
+        height: auto;
         overflow-y: visible;
-        padding: 40px 20px 20px;
+        padding: 48px 24px;
+        border-right: none;
+        border-bottom: 1px solid var(--lp-rim);
     }
 
-    .lp-right {
-        width: 100%;
-        border-left: none;
-        border-top: 1px solid var(--lp-rim);
-        padding: 32px 20px 40px;
+    .lp-col-info {
+        display: flex;
+        order: 2;
+    }
+
+    .lp-col-pricing {
+        order: 3;
+    }
+
+    .lp-col-form {
+        order: 1;
+        background: linear-gradient(180deg, rgba(192, 132, 252, 0.08) 0%, transparent 100%);
     }
 
     .lp-plans {
         display: grid;
         grid-template-columns: 1fr 1fr;
+        gap: 16px;
     }
 }
 
@@ -1090,6 +1111,7 @@
         grid-template-columns: 1fr;
     }
 }
+
 
 /* ── section divider between hero and pricing ── */
 .lp-pricing-block {

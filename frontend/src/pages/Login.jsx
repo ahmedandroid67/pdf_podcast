@@ -174,9 +174,8 @@ export default function Login() {
       <div className="lp-mesh" aria-hidden="true" />
       <div className="lp-grain" aria-hidden="true" />
 
-      {/* ══════════════ LEFT PANEL ══════════════ */}
-      <div className="lp-left lp-pricing-side">
-
+      {/* ══════════════ COLUMN 1: APP INFO ══════════════ */}
+      <div className="lp-col lp-col-info">
         {/* ── brand ── */}
         <div className="lp-brand fade-in d100">
           <div className="lp-brand-icon">🎙️</div>
@@ -224,10 +223,11 @@ export default function Login() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* ══ PRICING SECTION ══ */}
+      {/* ══════════════ COLUMN 2: PRICING ══════════════ */}
+      <div className="lp-col lp-col-pricing">
         <div className="lp-pricing-block fade-in d500">
-
           <div className="lp-section-divider">
             <span>💼 {t('choose_plan', 'Choose your plan')}</span>
           </div>
@@ -253,7 +253,6 @@ export default function Login() {
                 ].join(' ')}
                 onClick={() => setActivePlan(plan.id)}
               >
-                {/* card header */}
                 <div className="lp-plan-top">
                   <div className="lp-plan-left">
                     <span className="lp-plan-icon">{plan.icon}</span>
@@ -268,7 +267,6 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* expandable features */}
                 <div className={`lp-plan-features ${activePlan === plan.id ? 'lp-plan-features-open' : ''}`}>
                   <div className="lp-plan-features-inner">
                     {plan.features.map((f) => (
@@ -282,7 +280,6 @@ export default function Login() {
                     </div>
                   </div>
                 </div>
-
                 {activePlan === plan.id && <div className="lp-plan-selected-bar" />}
               </button>
             ))}
@@ -291,17 +288,12 @@ export default function Login() {
           <p className="lp-pricing-note">
             ✅ {t('pricing_note_free', 'No credit card required for Free')} &nbsp;·&nbsp; 🔒 {t('pricing_note_cancel', 'Cancel anytime')}
           </p>
-
         </div>
-        {/* ══ END PRICING ══ */}
-
       </div>
-      {/* ══════════════ END LEFT ══════════════ */}
 
-      {/* ══════════════ RIGHT PANEL ══════════════ */}
-      <div className="lp-right">
+      {/* ══════════════ COLUMN 3: FORM ══════════════ */}
+      <div className="lp-col lp-col-form">
         <div className="lp-form-wrap">
-
           <div className="lp-brand lp-only-mobile fade-in d100">
             <div className="lp-brand-icon">🎙️</div>
             <div className="lp-brand-name">Pdf<em>Parser</em></div>
@@ -333,7 +325,6 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit}>
-
             <div className="lp-field fade-in d500">
               <label className="lp-label" htmlFor="lp-email">
                 {t('email', 'Email')}
@@ -401,7 +392,6 @@ export default function Login() {
             <button type="submit" className="lp-submit fade-in d700" disabled={loading}>
               {loading ? <span className="lp-spinner" /> : t('login_action', 'Sign in →')}
             </button>
-
           </form>
 
           <p className="lp-signup fade-in d700">
@@ -416,7 +406,6 @@ export default function Login() {
             <span className="lp-trust-dot" />
             <span className="lp-trust-item">🚫 {t('trust_spam', 'No spam, ever')}</span>
           </div>
-
         </div>
       </div>
       {/* ══════════════ END RIGHT ══════════════ */}
