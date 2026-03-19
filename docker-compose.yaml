@@ -22,31 +22,31 @@ services:
       dockerfile: Dockerfile
     env_file:
       - ./backend/.env
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
+#    environment:
+#      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
     volumes:
       - audio_data:/app/static/audio
       - storage_data:/app/storage
-    depends_on:
-      - db
+#    depends_on:
+#      - db
     # Port 8000 is not needed externally as the frontend Nginx proxies to it internally.
     # ports:
     #   - "8000:8000"
     restart: always
 
-  db:
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    # No need to expose DB port to host in Coolify.
-    # ports:
-    #   - "5432:5432"
+#  db:
+#    image: postgres:16-alpine
+#    environment:
+#      - POSTGRES_USER=postgres
+#      - POSTGRES_PASSWORD=postgres
+#      - POSTGRES_DB=postgres
+#    volumes:
+#      - db_data:/var/lib/postgresql/data
+#    # No need to expose DB port to host in Coolify.
+#    # ports:
+#    #   - "5432:5432"
 
 volumes:
   audio_data:
   storage_data:
-  db_data:
+#  db_data:
