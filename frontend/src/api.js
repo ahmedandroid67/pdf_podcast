@@ -2,7 +2,7 @@
  * api.js — thin wrapper over the FastAPI backend
  */
 
-export const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+export const API_BASE = import.meta.env.VITE_API_BASE || '';
 const BASE = `${API_BASE}/api`;
 
 function getToken() {
