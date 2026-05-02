@@ -63,5 +63,5 @@ CORS_ORIGINS = "*"
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["bash", "-c", "cd backend && python -m uvicorn main:app --host 0.0.0.0 --port 5000"]
-build = ["bash", "-c", "cd frontend && npm install && npm run build"]
+run = ["bash", "-c", "cd backend && gunicorn --bind 0.0.0.0:5000 -w 2 -k uvicorn.workers.UvicornWorker main:app"]
+build = ["bash", "-c", "cd frontend && npm ci && npm run build"]

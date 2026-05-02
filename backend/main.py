@@ -12,6 +12,8 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, HttpUrl
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -58,7 +60,7 @@ async def on_startup():
         db.close()
 
 
-@app.get("/", summary="API Root")
+@app.get("/api", summary="API Root")
 async def root():
     return {
         "message": "Welcome to the PDF Podcast Summarizer API",
@@ -334,3 +336,22 @@ app.include_router(admin_router)
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Serve React frontend (production build)
+# ---------------------------------------------------------------------------
+_FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+if _FRONTEND_DIST.exists():
+    # Serve compiled JS/CSS/assets
+    app.mount("/assets", StaticFiles(directory=_FRONTEND_DIST / "assets"), name="assets")
+
+    # Serve any other static file (favicon, manifest, icons, sw.js, etc.)
+    # then fall back to index.html for all SPA routes
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        candidate = _FRONTEND_DIST / full_path
+        if candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(_FRONTEND_DIST / "index.html")
