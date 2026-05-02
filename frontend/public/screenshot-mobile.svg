@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" width="390" height="844">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#818cf8"/>
+    </linearGradient>
+    <linearGradient id="btn" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#4f46e5"/>
+    </linearGradient>
+  </defs>
+  <rect width="390" height="844" fill="#f5f4ff"/>
+  <rect width="390" height="56" fill="white" opacity="0.95"/>
+  <rect x="16" y="12" width="30" height="30" rx="8" fill="#6366f1"/>
+  <text x="31" y="30" font-size="14" text-anchor="middle" font-family="sans-serif" fill="white">🎙</text>
+  <text x="56" y="30" font-size="15" font-weight="bold" font-family="sans-serif" fill="#111827">PdfParser</text>
+  <rect y="56" width="390" height="1" fill="#e5e7eb"/>
+  <rect x="16" y="72" width="358" height="130" rx="16" fill="white" stroke="#e5e7eb" stroke-width="1.5"/>
+  <rect x="32" y="90" width="44" height="44" rx="11" fill="url(#bg)"/>
+  <text x="54" y="118" font-size="20" text-anchor="middle" font-family="sans-serif">👤</text>
+  <rect x="88" y="95" width="100" height="10" rx="5" fill="#e5e7eb"/>
+  <rect x="88" y="113" width="60" height="8" rx="4" fill="#eef2ff"/>
+  <rect x="32" y="148" width="322" height="6" rx="3" fill="#f3f4f6"/>
+  <rect x="32" y="148" width="180" height="6" rx="3" fill="#6366f1" opacity="0.5"/>
+  <text x="32" y="183" font-size="10" font-family="sans-serif" fill="#9ca3af">12 / 20 used today</text>
+  <rect x="16" y="218" width="358" height="50" rx="14" fill="white" stroke="#e5e7eb" stroke-width="1.5"/>
+  <text x="42" y="248" font-size="14" font-family="sans-serif" fill="#6366f1">✨  Create Podcast</text>
+  <rect x="16" y="280" width="358" height="50" rx="14" fill="white" stroke="#e5e7eb" stroke-width="1.5"/>
+  <text x="42" y="310" font-size="14" font-family="sans-serif" fill="#6b7280">📋  Job History</text>
+  <rect x="16" y="348" width="358" height="420" rx="18" fill="white" stroke="#e5e7eb" stroke-width="1.5"/>
+  <text x="36" y="378" font-size="13" font-weight="bold" font-family="sans-serif" fill="#111827">✨ Create Podcast</text>
+  <rect x="36" y="400" width="326" height="200" rx="12" fill="#fafafa" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="199" y="490" font-size="40" text-anchor="middle" font-family="sans-serif" opacity="0.25">🎙️</text>
+  <text x="199" y="530" font-size="11" text-anchor="middle" font-family="sans-serif" fill="#9ca3af">Drop PDF or paste URL</text>
+  <text x="199" y="550" font-size="10" text-anchor="middle" font-family="sans-serif" fill="#c4b5fd">tap to browse files</text>
+  <rect x="100" y="616" width="190" height="42" rx="11" fill="url(#btn)"/>
+  <text x="195" y="642" font-size="13" text-anchor="middle" font-family="sans-serif" fill="white" font-weight="bold">Upload PDF →</text>
+</svg>

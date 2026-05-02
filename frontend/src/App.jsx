@@ -5,11 +5,13 @@ import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AuthCallback from './pages/AuthCallback';
 import ProtectedRoute from './components/ProtectedRoute';
+import InstallPrompt from './components/InstallPrompt';
 import { useAuth } from './context/AuthContext';
 
 export default function App() {
   return (
     <BrowserRouter>
+      <InstallPrompt />
       <Routes>
         <Route
           path="/"

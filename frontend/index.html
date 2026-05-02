@@ -2,14 +2,52 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PodcastPDF – Turn Any PDF into a Podcast</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Primary meta -->
+    <title>PdfParser – Turn Any PDF into a Podcast</title>
     <meta name="description" content="Upload a PDF or paste a URL to get an AI-generated podcast episode: text extraction, GPT summarization, and text-to-speech narration." />
-    <meta name="theme-color" content="#0f0f1a" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
+    <meta name="application-name" content="PdfParser" />
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="background-color" content="#f5f4ff" />
+
+    <!-- PWA / mobile display -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="PdfParser" />
+
+    <!-- Apple touch icon (iOS home screen) -->
+    <link rel="apple-touch-icon" href="/pwa-192.svg" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/pwa-192.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/pwa-192.svg" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/pwa-192.svg" />
+
+    <!-- Splash screens for iOS -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Standard favicon -->
+    <link rel="icon" type="image/svg+xml" href="/pwa-192.svg" />
+    <link rel="shortcut icon" href="/pwa-192.svg" />
+
+    <!-- Manifest (injected by vite-plugin-pwa) -->
+
     <!-- Google Fonts preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Open Graph (share previews) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PdfParser – Turn Any PDF into a Podcast" />
+    <meta property="og:description" content="Drop any document. AI extracts key insights and narrates them as a polished podcast — in seconds." />
+    <meta property="og:image" content="/pwa-512.svg" />
+
+    <!-- Twitter card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PdfParser – PDF to Podcast" />
+    <meta name="twitter:description" content="AI-powered PDF to podcast converter. Multi-language. Instant." />
   </head>
   <body>
     <div id="root"></div>
