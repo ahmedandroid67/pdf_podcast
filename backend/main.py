@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 # App setup
 # ---------------------------------------------------------------------------
 
-from jobs.cleanup_jobs import cleanup_expired_jobs
+from jobs.cleanup_jobs import cleanup_expired_jobs, reset_stale_jobs
 
 app = FastAPI(
     title="PDF Podcast Summarizer",
@@ -55,6 +55,7 @@ app = FastAPI(
 async def on_startup():
     db = next(get_db())
     try:
+        reset_stale_jobs(db)
         cleanup_expired_jobs(db)
     finally:
         db.close()

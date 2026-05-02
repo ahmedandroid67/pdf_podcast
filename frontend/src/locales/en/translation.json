@@ -148,5 +148,12 @@
   "plan_feat_team": "Team collaboration",
   "plan_feat_analytics": "Usage analytics",
   "plan_feat_unlimited_storage": "Lifetime link storage",
-  "plan_feat_highest": "Highest priority queue"
+  "plan_feat_highest": "Highest priority queue",
+  "mode_dialogue": "Dialogue Mode",
+  "mode_dialogue_desc": "Two-host conversation (Host + Guest voices)",
+  "podcast_language": "Podcast Language",
+  "status_queued": "Queued — waiting to start…",
+  "status_scripting": "Writing podcast script…",
+  "status_done": "Finishing up…",
+  "remaining": "remaining today"
 }

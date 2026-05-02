@@ -74,6 +74,7 @@ export async function generatePodcast(summary, lang = 'en', mode = 'podcast') {
   return handleResponse(res);
 }
 
+/** Start full pipeline (upload) → { job_id, status } */
 export async function processPdfUpload(file, lang = 'en', mode = 'podcast') {
   const form = new FormData();
   form.append('file', file);
@@ -87,11 +88,28 @@ export async function processPdfUpload(file, lang = 'en', mode = 'podcast') {
   return handleResponse(res);
 }
 
+/** Start full pipeline (URL) → { job_id, status } */
 export async function processPdfUrl(url, lang = 'en', mode = 'podcast') {
   const res = await fetch(`${BASE}/process/url`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ url, lang, mode }),
+  });
+  return handleResponse(res);
+}
+
+/** Poll pipeline progress → { job_id, step, status } */
+export async function fetchJobProgress(jobId) {
+  const res = await fetch(`${BASE}/jobs/${jobId}/progress`, {
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
+/** Fetch final result (text/summary/script/audio_url) once completed */
+export async function fetchJobResult(jobId) {
+  const res = await fetch(`${BASE}/jobs/${jobId}/result`, {
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }

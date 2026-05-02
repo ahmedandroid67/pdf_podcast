@@ -1,16 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { processPdfUpload, processPdfUrl } from '../api';
+import { processPdfUpload, processPdfUrl, fetchJobProgress, fetchJobResult } from '../api';
 import DropZone from './DropZone';
 import UrlInput from './UrlInput';
 import PipelineStepper from './PipelineStepper';
 import AudioPlayer from './AudioPlayer';
 import LanguageSelector from './LanguageSelector';
 import AudioModeSelector from './AudioModeSelector';
+import PodcastLanguageSelector from './PodcastLanguageSelector';
 import './PodcastPipeline.css';
 
 const STEP = { UPLOAD: 0, EXTRACT: 1, SUMMARIZE: 2, PODCAST: 3, AUDIO: 4 };
 const STATUS = { IDLE: 'idle', LOADING: 'loading', ERROR: 'error', DONE: 'done' };
+
+const STEP_MAP = {
+  queued:      STEP.EXTRACT,
+  extracting:  STEP.EXTRACT,
+  summarizing: STEP.SUMMARIZE,
+  scripting:   STEP.PODCAST,
+  audio:       STEP.AUDIO,
+  done:        STEP.AUDIO,
+};
 
 const HOW_STEPS = (t) => [
   { icon: '📄', title: t('how_step_1_title'), desc: t('how_step_1_desc') },
@@ -20,50 +30,118 @@ const HOW_STEPS = (t) => [
   { icon: '🎧', title: t('how_step_5_title'), desc: t('how_step_5_desc') },
 ];
 
-/* ─── component ─────────────────────────────────────────────────────────────── */
 export default function PodcastPipeline({ onJobCreated, embedded = false }) {
   const { t, i18n } = useTranslation();
 
-  const [tab, setTab] = useState('file');
-  const [step, setStep] = useState(STEP.UPLOAD);
-  const [status, setStatus] = useState(STATUS.IDLE);
-  const [error, setError] = useState('');
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [tab, setTab]                   = useState('file');
+  const [step, setStep]                 = useState(STEP.UPLOAD);
+  const [status, setStatus]             = useState(STATUS.IDLE);
+  const [error, setError]               = useState('');
   const [extractedText, setExtractedText] = useState('');
-  const [summary, setSummary] = useState('');
-  const [script, setScript] = useState('');
-  const [audioUrl, setAudioUrl] = useState('');
+  const [summary, setSummary]           = useState('');
+  const [script, setScript]             = useState('');
+  const [audioUrl, setAudioUrl]         = useState('');
   const [processingMode, setProcessingMode] = useState('podcast');
+  const [podcastLang, setPodcastLang]   = useState('en');
+  const [progressLabel, setProgressLabel] = useState('');
 
+  const pollingRef = useRef(null);
   const busy = status === STATUS.LOADING;
 
   const reset = () => {
+    stopPolling();
     setStep(STEP.UPLOAD);
     setStatus(STATUS.IDLE);
     setError('');
-    setSelectedFile(null);
     setExtractedText('');
     setSummary('');
     setScript('');
     setAudioUrl('');
+    setProgressLabel('');
   };
+
+  const stopPolling = () => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  };
+
+  const stepLabelFromKey = (key) => {
+    const map = {
+      queued:      t('status_queued',     'Queued — waiting to start…'),
+      extracting:  t('status_extracting'),
+      summarizing: t('status_summarizing'),
+      scripting:   t('status_scripting',  'Writing podcast script…'),
+      audio:       t('status_generating'),
+      done:        t('status_done',       'Finishing up…'),
+    };
+    return map[key] || t('status_extracting');
+  };
+
+  const startPolling = (jobId) => {
+    pollingRef.current = setInterval(async () => {
+      try {
+        const prog = await fetchJobProgress(jobId);
+        const pStep = STEP_MAP[prog.step] ?? STEP.EXTRACT;
+        setStep(pStep);
+        setProgressLabel(stepLabelFromKey(prog.step));
+
+        const isDone   = prog.status === 'completed' || prog.step === 'done';
+        const isFailed = prog.status === 'failed'    || prog.step === 'failed';
+
+        if (isDone) {
+          stopPolling();
+          try {
+            const result = await fetchJobResult(jobId);
+            setExtractedText(result.text  || '');
+            setSummary(result.summary     || '');
+            setScript(result.script       || '');
+            setAudioUrl(result.audio_url  || '');
+            setStep(STEP.AUDIO);
+            setStatus(STATUS.DONE);
+            if (onJobCreated) onJobCreated(jobId);
+          } catch (e) {
+            setError(e.message);
+            setStatus(STATUS.ERROR);
+            setStep(STEP.UPLOAD);
+          }
+        } else if (isFailed) {
+          stopPolling();
+          const result = await fetchJobResult(jobId).catch(() => null);
+          setError(result?.error || t('error_processing_file', 'Processing failed.'));
+          setStatus(STATUS.ERROR);
+          setStep(STEP.UPLOAD);
+        }
+      } catch {
+        /* ignore transient network errors */
+      }
+    }, 2500);
+  };
+
+  useEffect(() => () => stopPolling(), []);
 
   const runProcess = async (source) => {
     setStatus(STATUS.LOADING);
     setError('');
     setStep(STEP.EXTRACT);
+    setProgressLabel(t('status_extracting'));
     try {
       const data = source.type === 'file'
-        ? await processPdfUpload(source.file, i18n.language, processingMode)
-        : await processPdfUrl(source.url, i18n.language, processingMode);
+        ? await processPdfUpload(source.file, podcastLang, processingMode)
+        : await processPdfUrl(source.url, podcastLang, processingMode);
 
-      setExtractedText(data.text);
-      setSummary(data.summary);
-      setScript(data.script);
-      setAudioUrl(data.audio_url);
-      setStep(STEP.AUDIO);
-      setStatus(STATUS.DONE);
-      if (data.job_id && onJobCreated) onJobCreated(data.job_id);
+      if (data.job_id) {
+        startPolling(data.job_id);
+      } else {
+        setExtractedText(data.text    || '');
+        setSummary(data.summary       || '');
+        setScript(data.script         || '');
+        setAudioUrl(data.audio_url    || '');
+        setStep(STEP.AUDIO);
+        setStatus(STATUS.DONE);
+        if (onJobCreated) onJobCreated(data.job_id);
+      }
     } catch (e) {
       setError(t(e.message) || e.message);
       setStatus(STATUS.ERROR);
@@ -71,34 +149,23 @@ export default function PodcastPipeline({ onJobCreated, embedded = false }) {
     }
   };
 
-  const handleFile = (file) => { setSelectedFile(file); runProcess({ type: 'file', file }); };
-  const handleUrl = (url) => runProcess({ type: 'url', url });
+  const handleFile = (file) => runProcess({ type: 'file', file });
+  const handleUrl  = (url)  => runProcess({ type: 'url',  url  });
 
-  /* step label helper */
-  const stepLabel = () => {
-    if (step === STEP.EXTRACT) return t('status_extracting');
-    if (step === STEP.SUMMARIZE) return t('status_summarizing');
-    if (step === STEP.PODCAST) return t('status_generating');
-    return '';
-  };
+  const stepLabel = () => progressLabel || t('status_extracting');
 
-  /* ── main content ── */
   const mainContent = (
     <main className="pp-main">
 
-      {/* ── hero ── */}
       <div className="pp-hero fade-in pp-d1">
         <div className="pp-hero-badge">
           <span className="pp-badge-dot" />
           AI-Powered · Instant · Multi-language
         </div>
-        <h1 className="pp-hero-title">
-          {t('hero_title')}
-        </h1>
+        <h1 className="pp-hero-title">{t('hero_title')}</h1>
         <p className="pp-hero-sub">{t('hero_subtitle')}</p>
       </div>
 
-      {/* ── pipeline stepper (visible when processing) ── */}
       {status !== STATUS.IDLE && (
         <div className="pp-stepper-wrap fade-in pp-d1">
           <div className="pp-stepper-card">
@@ -117,11 +184,9 @@ export default function PodcastPipeline({ onJobCreated, embedded = false }) {
         </div>
       )}
 
-      {/* ── upload card ── */}
       {status !== STATUS.DONE && (
         <div className="pp-upload-card fade-in pp-d2">
 
-          {/* tab switcher */}
           <div className="pp-tabs">
             {['file', 'url'].map((tabItem) => (
               <button
@@ -139,27 +204,23 @@ export default function PodcastPipeline({ onJobCreated, embedded = false }) {
             ))}
           </div>
 
-          {/* input zone */}
           <div className="pp-input-zone">
             {tab === 'file'
               ? <DropZone onFile={handleFile} disabled={busy} />
-              : <UrlInput onUrl={handleUrl} disabled={busy} />
+              : <UrlInput onUrl={handleUrl}   disabled={busy} />
             }
           </div>
 
-          {/* mode selector */}
           <div className="pp-mode-row">
             <AudioModeSelector mode={processingMode} onChange={setProcessingMode} disabled={busy} />
           </div>
 
-          {/* hint */}
+          <PodcastLanguageSelector lang={podcastLang} onChange={setPodcastLang} disabled={busy} />
+
           {!busy && status !== STATUS.ERROR && (
-            <p className="pp-hint">
-              {t('tip')} &nbsp;·&nbsp; {t('test_file_hint')}
-            </p>
+            <p className="pp-hint">{t('tip')}</p>
           )}
 
-          {/* loading state */}
           {busy && (
             <div className="pp-loading-bar">
               <div className="pp-loading-spinner" />
@@ -172,37 +233,36 @@ export default function PodcastPipeline({ onJobCreated, embedded = false }) {
         </div>
       )}
 
-      {/* ── results ── */}
       {status === STATUS.DONE && (
         <div className="pp-results fade-in pp-d1">
 
-          {/* audio player */}
           <div className="pp-result-block">
             <AudioPlayer audioUrl={audioUrl} script={script} />
           </div>
 
-          {/* summary */}
-          <div className="pp-result-block pp-summary-card fade-in pp-d2">
-            <div className="pp-result-header">
-              <span className="pp-result-icon">📝</span>
-              <h2 className="pp-result-title">{t('results_summary')}</h2>
+          {summary && (
+            <div className="pp-result-block pp-summary-card fade-in pp-d2">
+              <div className="pp-result-header">
+                <span className="pp-result-icon">📝</span>
+                <h2 className="pp-result-title">{t('results_summary')}</h2>
+              </div>
+              <p className="pp-summary-text">{summary}</p>
             </div>
-            <p className="pp-summary-text">{summary}</p>
-          </div>
+          )}
 
-          {/* raw text */}
-          <div className="pp-result-block pp-raw-card fade-in pp-d3">
-            <details>
-              <summary className="pp-raw-summary">
-                <span className="pp-result-icon">📄</span>
-                {t('results_raw_text', { count: extractedText.length })}
-                <span className="pp-raw-chevron">▾</span>
-              </summary>
-              <div className="pp-raw-content">{extractedText}</div>
-            </details>
-          </div>
+          {extractedText && (
+            <div className="pp-result-block pp-raw-card fade-in pp-d3">
+              <details>
+                <summary className="pp-raw-summary">
+                  <span className="pp-result-icon">📄</span>
+                  {t('results_raw_text', { count: extractedText.length })}
+                  <span className="pp-raw-chevron">▾</span>
+                </summary>
+                <div className="pp-raw-content">{extractedText}</div>
+              </details>
+            </div>
+          )}
 
-          {/* start over */}
           <div className="pp-start-over">
             <button className="pp-start-over-btn" onClick={reset}>
               ↺ {t('results_process_another')}
@@ -211,7 +271,6 @@ export default function PodcastPipeline({ onJobCreated, embedded = false }) {
         </div>
       )}
 
-      {/* ── how it works ── */}
       {status === STATUS.IDLE && (
         <div className="pp-how fade-in pp-d3">
           <div className="pp-how-header">
@@ -236,25 +295,18 @@ export default function PodcastPipeline({ onJobCreated, embedded = false }) {
     </main>
   );
 
-  /* embedded mode */
   if (embedded) return <div className="pp-embedded">{mainContent}</div>;
 
-  /* full page mode */
   return (
     <div className="pp-page">
-
-      {/* ambient bg */}
       <div className="pp-bg-mesh" aria-hidden="true" />
       <div className="pp-bg-grain" aria-hidden="true" />
 
-      {/* header */}
       <header className="pp-header">
         <div className="pp-header-inner">
           <div className="pp-logo">
             <div className="pp-logo-icon">🎙️</div>
-            <span className="pp-logo-name">
-              Pdf<em>Parser</em>
-            </span>
+            <span className="pp-logo-name">Pdf<em>Parser</em></span>
           </div>
           <div className="pp-header-right">
             <LanguageSelector />
@@ -264,7 +316,6 @@ export default function PodcastPipeline({ onJobCreated, embedded = false }) {
 
       {mainContent}
 
-      {/* footer */}
       <footer className="pp-footer">
         <p>{t('footer')}</p>
       </footer>

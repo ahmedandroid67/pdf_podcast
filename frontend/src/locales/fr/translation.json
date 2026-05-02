@@ -148,5 +148,12 @@
   "plan_feat_team": "Collaboration d'équipe",
   "plan_feat_analytics": "Analyses d'utilisation",
   "plan_feat_unlimited_storage": "Stockage lien à vie",
-  "plan_feat_highest": "File d'attente prioritaire"
+  "plan_feat_highest": "File d'attente prioritaire",
+  "mode_dialogue": "Mode Dialogue",
+  "mode_dialogue_desc": "Conversation deux hôtes (voix Hôte + Invité)",
+  "podcast_language": "Langue du podcast",
+  "status_queued": "En attente de démarrage…",
+  "status_scripting": "Écriture du script podcast…",
+  "status_done": "Finalisation…",
+  "remaining": "restants aujourd'hui"
 }

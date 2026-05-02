@@ -148,5 +148,12 @@
   "plan_feat_team": "تعاون الفريق",
   "plan_feat_analytics": "تحليلات الاستخدام",
   "plan_feat_unlimited_storage": "تخزين الروابط مدى الحياة",
-  "plan_feat_highest": "أعلى أولوية في قائمة الانتظار"
+  "plan_feat_highest": "أعلى أولوية في قائمة الانتظار",
+  "mode_dialogue": "وضع الحوار",
+  "mode_dialogue_desc": "محادثة بين مضيفَين (صوتا المضيف والضيف)",
+  "podcast_language": "لغة البودكاست",
+  "status_queued": "في قائمة الانتظار…",
+  "status_scripting": "جاري كتابة نص البودكاست…",
+  "status_done": "جاري الإنهاء…",
+  "remaining": "متبقٍ اليوم"
 }

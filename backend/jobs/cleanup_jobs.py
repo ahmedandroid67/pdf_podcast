@@ -69,6 +69,22 @@ def cleanup_expired_jobs(db: Session):
     else:
         logger.info("No expired jobs found.")
 
+def reset_stale_jobs(db: Session):
+    """
+    On startup, reset any jobs stuck in 'processing' (e.g. from a crash or restart).
+    They will never complete, so mark them failed so users can see what happened.
+    """
+    from database.models import JobStatus
+    stale = db.query(PodcastJob).filter(PodcastJob.status == JobStatus.processing).all()
+    if stale:
+        for job in stale:
+            job.status = JobStatus.failed
+        db.commit()
+        logger.info(f"Reset {len(stale)} stale processing job(s) to failed on startup.")
+    else:
+        logger.info("No stale jobs found on startup.")
+
+
 if __name__ == "__main__":
     # This allow running it as a standalone script
     from database.database import SessionLocal

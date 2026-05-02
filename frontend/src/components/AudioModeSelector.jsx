@@ -4,6 +4,27 @@ export default function AudioModeSelector({ mode, onChange, disabled }) {
   const { t, i18n } = useTranslation();
   const isRtl = i18n.language === 'ar';
 
+  const modes = [
+    {
+      id: 'podcast',
+      icon: '🎙️',
+      title: t('mode_podcast'),
+      desc: t('mode_podcast_desc'),
+    },
+    {
+      id: 'dialogue',
+      icon: '🎭',
+      title: t('mode_dialogue'),
+      desc: t('mode_dialogue_desc'),
+    },
+    {
+      id: 'audiobook',
+      icon: '📖',
+      title: t('mode_audiobook'),
+      desc: t('mode_audiobook_desc'),
+    },
+  ];
+
   return (
     <div style={{
       display: 'flex',
@@ -15,17 +36,15 @@ export default function AudioModeSelector({ mode, onChange, disabled }) {
       borderRadius: '12px',
       border: '1.5px solid #e5e7eb',
     }}>
-      <div style={{ display: 'flex', gap: '8px' }}>
-        {[
-          { id: 'podcast',   icon: '🎙️', title: t('mode_podcast'),   desc: t('mode_podcast_desc') },
-          { id: 'audiobook', icon: '📖', title: t('mode_audiobook'), desc: t('mode_audiobook_desc') },
-        ].map((item) => (
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {modes.map((item) => (
           <button
             key={item.id}
             onClick={() => !disabled && onChange(item.id)}
             disabled={disabled}
             style={{
-              flex: 1,
+              flex: '1 1 0',
+              minWidth: '90px',
               padding: '12px',
               borderRadius: '10px',
               border: `2px solid ${mode === item.id ? '#6366f1' : '#e5e7eb'}`,
