@@ -5,14 +5,15 @@ import { API_BASE, fetchJobs, changePassword } from '../api';
 import { useAuth } from '../context/AuthContext';
 import PodcastPipeline from '../components/PodcastPipeline';
 import LanguageSelector from '../components/LanguageSelector';
+import './Dashboard.css';
 
+/* ── inline audio loader ── */
 function JobAudio({ jobId }) {
   const [audioUrl, setAudioUrl] = useState('');
 
   useEffect(() => {
     let active = true;
     let objectUrl = '';
-
     const load = async () => {
       const token = localStorage.getItem('auth_token');
       const res = await fetch(`${API_BASE}/api/audio/${jobId}`, {
@@ -23,53 +24,56 @@ function JobAudio({ jobId }) {
       objectUrl = URL.createObjectURL(blob);
       if (active) setAudioUrl(objectUrl);
     };
-
     load();
-
-    return () => {
-      active = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
+    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [jobId]);
 
   if (!audioUrl) return null;
-
   return (
-    <audio
-      controls
-      src={audioUrl}
-      style={{
-        width: '220px',
-        height: '36px',
-        accentColor: '#6366f1',
-        borderRadius: '8px',
-      }}
-    />
+    <div className="db-job-audio">
+      <audio controls src={audioUrl} />
+    </div>
   );
 }
+
+/* ── avatar initials ── */
+function getInitials(email = '') {
+  const parts = email.split('@')[0].split(/[._-]/);
+  return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() || '').join('') || '?';
+}
+
+/* ── plan styling map ── */
+const PLAN_STYLES = {
+  free:     { badgeBg: '#64748b',   cardBg: '#f8fafc', border: '#e2e8f0' },
+  basic:    { badgeBg: '#2563eb',   cardBg: '#eff6ff', border: '#bfdbfe' },
+  pro:      { badgeBg: 'linear-gradient(135deg,#6366f1,#818cf8)', cardBg: '#eef2ff', border: '#c7d2fe' },
+  business: { badgeBg: '#d97706',   cardBg: '#fffbeb', border: '#fde68a' },
+};
 
 export default function Dashboard() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
-  const [jobs, setJobs] = useState([]);
+  const [jobs, setJobs]               = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(false);
+  const [activeNav, setActiveNav]     = useState('create');
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
-  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [newPassword, setNewPassword]             = useState('');
+  const [passwordLoading, setPasswordLoading]     = useState(false);
+  const [passwordError, setPasswordError]         = useState('');
+  const [passwordSuccess, setPasswordSuccess]     = useState('');
 
-  const remainingQuota = user ? Math.max(user.daily_quota - user.used_today, 0) : 0;
+  const plan      = user?.plan || 'free';
+  const planStyle = PLAN_STYLES[plan] || PLAN_STYLES.pro;
+  const used      = user?.used_today ?? 0;
+  const quota     = user?.daily_quota ?? 0;
+  const remaining = Math.max(quota - used, 0);
+  const pct       = quota > 0 ? Math.min(100, (used / quota) * 100) : 0;
 
   const loadJobs = async () => {
     setLoadingJobs(true);
-    try {
-      const data = await fetchJobs();
-      setJobs(data);
-    } finally {
-      setLoadingJobs(false);
-    }
+    try { setJobs(await fetchJobs()); }
+    finally { setLoadingJobs(false); }
   };
 
   const handleChangePassword = async (e) => {
@@ -85,10 +89,7 @@ export default function Dashboard() {
       await changePassword(newPassword);
       setPasswordSuccess(t('password_changed', 'Password updated successfully!'));
       setNewPassword('');
-      setTimeout(() => {
-        setShowPasswordModal(false);
-        setPasswordSuccess('');
-      }, 2000);
+      setTimeout(() => { setShowPasswordModal(false); setPasswordSuccess(''); }, 2000);
     } catch (err) {
       setPasswordError(err.message || t('password_change_failed', 'Failed to update password.'));
     } finally {
@@ -98,297 +99,218 @@ export default function Dashboard() {
 
   useEffect(() => { loadJobs(); }, []);
 
-  const planColor = {
-    free:     { bg: '#f8fafc', border: '#e2e8f0', badge: '#64748b' },
-    basic:    { bg: '#eff6ff', border: '#bfdbfe', badge: '#2563eb' },
-    pro:      { bg: '#eef2ff', border: '#c7d2fe', badge: '#4f46e5' },
-    business: { bg: '#fffbeb', border: '#fde68a', badge: '#d97706' },
-  }[user?.plan || 'free'] || { bg: '#eef2ff', border: '#c7d2fe', badge: '#4f46e5' };
+  const NAV = [
+    { id: 'create',  icon: '✨', label: t('nav_create',  'Create Podcast') },
+    { id: 'history', icon: '📋', label: t('nav_history', 'Job History') },
+  ];
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#fafafa' }}>
+    <div className="db-root">
 
-      {/* ── Header ── */}
-      <header style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        padding: '0 32px',
-        height: '62px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px',
-        background: 'rgba(255,255,255,0.88)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid #e5e7eb',
-        boxShadow: '0 1px 8px rgba(0,0,0,0.05)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '32px', height: '32px',
-            background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-            borderRadius: '9px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '16px',
-            boxShadow: '0 3px 10px rgba(99,102,241,0.26)',
-          }}>🎧</div>
-          <span style={{
-            fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
-            fontWeight: 800,
-            fontSize: '1.05rem',
-            background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            letterSpacing: '-0.02em',
-          }}>
-            {t('dashboard_title')}
-          </span>
+      {/* ════════════ HEADER ════════════ */}
+      <header className="db-header">
+        <div className="db-header-brand">
+          <div className="db-header-logo">🎙️</div>
+          <span className="db-header-name">Pdf<em>Parser</em></span>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="db-header-right">
           <LanguageSelector />
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-            <span style={{ color: '#4b5563', fontSize: '0.82rem', fontWeight: 500 }}>{user?.email}</span>
-            <button
-              onClick={() => setShowPasswordModal(true)}
-              style={{
-                background: 'none', border: 'none', color: '#6366f1',
-                fontSize: '0.7rem', padding: 0, cursor: 'pointer',
-                textDecoration: 'underline', fontWeight: 600,
-              }}
-            >
-              {t('change_password', 'Change password')}
-            </button>
-          </div>
           {user?.is_admin && (
-            <Link
-              to="/admin"
-              className="btn-secondary"
-              style={{
-                fontSize: '0.8rem', padding: '6px 14px',
-                background: '#fffbeb', borderColor: '#fde68a', color: '#d97706',
-              }}
-            >
-              🛡️ Admin Panel
-            </Link>
+            <Link to="/admin" className="db-header-admin">🛡️ Admin</Link>
           )}
-          <button className="btn-secondary" onClick={logout} style={{ fontSize: '0.875rem' }}>
-            {t('logout')}
-          </button>
+          <button className="db-logout" onClick={logout}>{t('logout')}</button>
         </div>
       </header>
 
-      {/* ── Main ── */}
-      <main style={{ flex: 1, width: '100%', maxWidth: '1100px', margin: '0 auto', padding: '36px 20px 80px' }}>
+      {/* ════════════ BODY ════════════ */}
+      <div className="db-body">
 
-        {/* ── Stats cards ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '14px', marginBottom: '24px' }}>
-          {/* Plan */}
-          <div style={{
-            background: planColor.bg,
-            border: `1.5px solid ${planColor.border}`,
-            borderRadius: '14px',
-            padding: '18px 20px',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-          }}>
-            <p style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>{t('plan')}</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111827', textTransform: 'capitalize' }}>
-                {user?.plan || 'free'}
-              </h3>
-              <span style={{
-                fontSize: '0.64rem', fontWeight: 700, padding: '2px 8px',
-                borderRadius: '100px', background: planColor.badge,
-                color: '#fff', textTransform: 'uppercase', letterSpacing: '0.06em',
-              }}>Active</span>
+        {/* ── Sidebar ── */}
+        <aside className="db-sidebar">
+
+          {/* User card */}
+          <div className={`db-user-card db-plan-${plan}`} style={{ borderColor: planStyle.border }}>
+            <div className="db-avatar">{getInitials(user?.email)}</div>
+
+            <div className="db-user-email" title={user?.email}>{user?.email}</div>
+
+            <div className="db-user-plan-row">
+              <span
+                className="db-plan-badge"
+                style={{ background: planStyle.badgeBg }}
+              >
+                {plan}
+              </span>
+              <span style={{ fontSize: '0.7rem', color: '#9ca3af', fontWeight: 500 }}>plan</span>
             </div>
-          </div>
 
-          {/* Quota Used */}
-          <div style={{
-            background: '#fff', border: '1.5px solid #e5e7eb',
-            borderRadius: '14px', padding: '18px 20px',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-          }}>
-            <p style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>{t('quota_used')}</p>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111827' }}>
-              {user?.used_today ?? 0}
-              <span style={{ fontSize: '0.85rem', color: '#9ca3af', fontWeight: 500 }}> / {user?.daily_quota ?? 0}</span>
-            </h3>
-            {user?.daily_quota > 0 && (
-              <div style={{ marginTop: '10px', height: '4px', background: '#e5e7eb', borderRadius: '99px', overflow: 'hidden' }}>
-                <div style={{
-                  height: '100%',
-                  width: `${Math.min(100, ((user?.used_today ?? 0) / user.daily_quota) * 100)}%`,
-                  background: 'linear-gradient(90deg, #6366f1, #818cf8)',
-                  borderRadius: '99px',
-                  transition: 'width 0.4s ease',
-                }} />
-              </div>
-            )}
-          </div>
-
-          {/* Remaining */}
-          <div style={{
-            background: '#fff', border: '1.5px solid #e5e7eb',
-            borderRadius: '14px', padding: '18px 20px',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-          }}>
-            <p style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>{t('quota_remaining')}</p>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: remainingQuota > 0 ? '#059669' : '#dc2626' }}>
-              {remainingQuota}
-              <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 500 }}> {t('remaining', 'remaining')}</span>
-            </h3>
-          </div>
-        </div>
-
-        {/* ── Pipeline ── */}
-        <div style={{
-          background: '#fff', border: '1.5px solid #e5e7eb',
-          borderRadius: '16px', padding: '16px', marginBottom: '24px',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-        }}>
-          <PodcastPipeline embedded onJobCreated={loadJobs} />
-        </div>
-
-        {/* ── Recent Jobs ── */}
-        <div style={{
-          background: '#fff', border: '1.5px solid #e5e7eb',
-          borderRadius: '16px', padding: '20px',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111827' }}>{t('recent_jobs')}</h3>
-            <button className="btn-secondary" onClick={loadJobs} disabled={loadingJobs} style={{ fontSize: '0.8rem', padding: '6px 14px' }}>
-              {loadingJobs ? t('loading') : t('refresh')}
+            <button className="db-change-pw" onClick={() => setShowPasswordModal(true)}>
+              🔑 {t('change_password', 'Change password')}
             </button>
+
+            <div className="db-divider" />
+
+            {/* Quota */}
+            <div className="db-quota-label">{t('quota_used', 'Daily Usage')}</div>
+            <div className="db-quota-row">
+              <span className="db-quota-used">{used}</span>
+              <span className="db-quota-total">/ {quota}</span>
+            </div>
+            <div className="db-quota-bar-wrap">
+              <div className="db-quota-bar-fill" style={{ width: `${pct}%` }} />
+            </div>
+            <span
+              className="db-quota-remaining"
+              style={{ color: remaining > 0 ? '#059669' : '#dc2626' }}
+            >
+              {remaining} {t('remaining', 'remaining today')}
+            </span>
           </div>
 
-          {jobs.length === 0 ? (
-            <div style={{ padding: '32px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🎙️</div>
-              <p style={{ color: '#9ca3af', fontSize: '0.875rem', fontWeight: 500 }}>{t('no_jobs')}</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              {jobs.map((job) => (
-                <div
-                  key={job.id}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {job.pdf_name}
-                    </p>
-                    <span style={{
-                      display: 'inline-block', marginTop: '4px',
-                      fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px',
-                      borderRadius: '100px', textTransform: 'uppercase', letterSpacing: '0.06em',
-                      background: job.status === 'completed' ? '#dcfce7' : job.status === 'failed' ? '#fee2e2' : '#f3f4f6',
-                      color: job.status === 'completed' ? '#16a34a' : job.status === 'failed' ? '#dc2626' : '#6b7280',
-                    }}>
-                      {job.status}
-                    </span>
-                  </div>
-                  {job.audio_path && <JobAudio jobId={job.id} />}
+          {/* Nav */}
+          <nav className="db-nav-card">
+            {NAV.map((item) => (
+              <button
+                key={item.id}
+                className={`db-nav-item${activeNav === item.id ? ' db-nav-item-active' : ''}`}
+                onClick={() => setActiveNav(item.id)}
+              >
+                <span className="db-nav-icon">{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Tip */}
+          <div className="db-tip-card">
+            <div className="db-tip-title">💡 {t('tip_title', 'Pro tip')}</div>
+            <p className="db-tip-text">
+              {t('tip_body', 'Upload multi-page PDFs — our AI extracts only the key ideas, keeping your podcast crisp and engaging.')}
+            </p>
+          </div>
+        </aside>
+
+        {/* ── Main ── */}
+        <main className="db-main">
+
+          {/* ── Create Podcast ── */}
+          {activeNav === 'create' && (
+            <div className="db-pipeline-card">
+              <div className="db-pipeline-header">
+                <div className="db-section-title">
+                  <span className="db-section-icon">✨</span>
+                  {t('nav_create', 'Create Podcast')}
                 </div>
-              ))}
+              </div>
+              <div className="db-pipeline-body">
+                <PodcastPipeline embedded onJobCreated={() => { loadJobs(); setActiveNav('history'); }} />
+              </div>
             </div>
           )}
-        </div>
-      </main>
 
-      {/* ── Change Password Modal ── */}
+          {/* ── Job History ── */}
+          {activeNav === 'history' && (
+            <div className="db-jobs-card">
+              <div className="db-jobs-header">
+                <div className="db-section-title">
+                  <span className="db-section-icon">📋</span>
+                  {t('recent_jobs', 'Recent Jobs')}
+                  {jobs.length > 0 && (
+                    <span style={{
+                      marginLeft: '6px', fontSize: '0.68rem', fontWeight: 700,
+                      background: '#eef2ff', color: '#6366f1',
+                      padding: '2px 8px', borderRadius: '100px',
+                    }}>
+                      {jobs.length}
+                    </span>
+                  )}
+                </div>
+                <button className="db-refresh-btn" onClick={loadJobs} disabled={loadingJobs}>
+                  {loadingJobs ? '…' : '↺'} {t('refresh', 'Refresh')}
+                </button>
+              </div>
+
+              {jobs.length === 0 ? (
+                <div className="db-jobs-empty">
+                  <div className="db-jobs-empty-icon">🎙️</div>
+                  <p className="db-jobs-empty-text">{t('no_jobs', 'No jobs yet — create your first podcast!')}</p>
+                  <button
+                    onClick={() => setActiveNav('create')}
+                    style={{
+                      marginTop: '14px', padding: '9px 20px',
+                      background: '#eef2ff', border: '1.5px solid #c7d2fe',
+                      borderRadius: '10px', color: '#6366f1',
+                      fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+                      fontFamily: 'inherit', transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#e0e7ff'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#eef2ff'}
+                  >
+                    ✨ {t('nav_create', 'Create Podcast')}
+                  </button>
+                </div>
+              ) : (
+                jobs.map((job) => {
+                  const statusClass = {
+                    completed:  'db-status-completed',
+                    failed:     'db-status-failed',
+                    processing: 'db-status-processing',
+                  }[job.status] || 'db-status-pending';
+
+                  return (
+                    <div key={job.id} className="db-job-row">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                        <div className="db-job-file-icon">📄</div>
+                        <div className="db-job-info">
+                          <p className="db-job-name">{job.pdf_name}</p>
+                          <div className="db-job-meta">
+                            <span className={`db-status-chip ${statusClass}`}>{job.status}</span>
+                            {job.created_at && (
+                              <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 500 }}>
+                                {new Date(job.created_at).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {job.audio_path && <JobAudio jobId={job.id} />}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* Show both when no specific view selected — default shows create */}
+        </main>
+      </div>
+
+      {/* ════════════ CHANGE PASSWORD MODAL ════════════ */}
       {showPasswordModal && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.35)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 100, padding: '20px',
-        }}>
-          <div style={{
-            background: '#fff', borderRadius: '20px',
-            boxShadow: '0 24px 60px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.07)',
-            maxWidth: '420px', width: '100%', padding: '32px',
-            border: '1.5px solid #e5e7eb',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>
-                {t('change_password', 'Change password')}
-              </h2>
-              <button
-                onClick={() => setShowPasswordModal(false)}
-                style={{
-                  background: '#f3f4f6', border: 'none', width: '32px', height: '32px',
-                  borderRadius: '50%', fontSize: '1.1rem', cursor: 'pointer',
-                  color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#e5e7eb'}
-                onMouseLeave={e => e.currentTarget.style.background = '#f3f4f6'}
-              >
-                ×
-              </button>
+        <div className="db-modal-backdrop" onClick={(e) => e.target === e.currentTarget && setShowPasswordModal(false)}>
+          <div className="db-modal">
+            <div className="db-modal-title">
+              {t('change_password', 'Change password')}
+              <button className="db-modal-close" onClick={() => setShowPasswordModal(false)}>×</button>
             </div>
 
             <form onSubmit={handleChangePassword}>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'block', fontSize: '0.72rem', color: '#6b7280',
-                  marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700,
-                }}>
-                  {t('new_password', 'New password')}
-                </label>
-                <input
-                  type="password"
-                  className="input"
-                  placeholder="Min. 8 characters"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                />
-              </div>
+              <label className="db-modal-label">{t('new_password', 'New password')}</label>
+              <input
+                type="password"
+                className="input-field"
+                placeholder="Min. 8 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                style={{ marginBottom: '14px' }}
+                required
+                autoComplete="new-password"
+              />
 
-              {passwordError && (
-                <div style={{
-                  background: '#fef2f2', border: '1px solid #fecaca',
-                  color: '#dc2626', padding: '10px 14px', borderRadius: '10px',
-                  fontSize: '0.83rem', marginBottom: '16px', fontWeight: 500,
-                }}>
-                  {passwordError}
-                </div>
-              )}
+              {passwordError   && <div className="db-alert-error">{passwordError}</div>}
+              {passwordSuccess && <div className="db-alert-success">{passwordSuccess}</div>}
 
-              {passwordSuccess && (
-                <div style={{
-                  background: '#f0fdf4', border: '1px solid #bbf7d0',
-                  color: '#16a34a', padding: '10px 14px', borderRadius: '10px',
-                  fontSize: '0.83rem', marginBottom: '16px', fontWeight: 500,
-                }}>
-                  {passwordSuccess}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{ width: '100%', padding: '12px' }}
-                disabled={passwordLoading}
-              >
+              <button type="submit" className="db-modal-submit" disabled={passwordLoading}>
                 {passwordLoading ? t('loading') : t('save_changes', 'Save password')}
               </button>
             </form>
