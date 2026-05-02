@@ -1,41 +1,48 @@
 import { useTranslation } from 'react-i18next';
 
 const languages = [
-  { code: 'en', label: 'English', icon: '🇺🇸' },
-  { code: 'fr', label: 'Français', icon: '🇫🇷' },
-  { code: 'ar', label: 'العربية', icon: '🇲🇦' },
+  { code: 'en', label: 'EN', icon: '🇺🇸' },
+  { code: 'fr', label: 'FR', icon: '🇫🇷' },
+  { code: 'ar', label: 'AR', icon: '🇲🇦' },
 ];
 
 export default function LanguageSelector() {
   const { i18n } = useTranslation();
 
   return (
-    <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
-      {languages.map((lang) => (
-        <button
-          key={lang.code}
-          onClick={() => i18n.changeLanguage(lang.code)}
-          style={{
-            background: i18n.language === lang.code ? 'var(--brand-from)' : 'var(--surface-3)',
-            color: i18n.language === lang.code ? '#fff' : 'var(--text-2)',
-            border: '1px solid var(--border)',
-            padding: '6px 12px',
-            borderRadius: '20px',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.2s',
-          }}
-          className="hover-lift"
-        >
-          <span>{lang.icon}</span>
-          <span style={{ display: 'none' }} className="lang-label">{lang.label}</span>
-          <span>{lang.code.toUpperCase()}</span>
-        </button>
-      ))}
+    <div style={{
+      display: 'flex', gap: '4px',
+      background: '#f3f4f6', padding: '3px', borderRadius: '10px',
+      border: '1px solid #e5e7eb',
+    }}>
+      {languages.map((lang) => {
+        const active = i18n.language === lang.code;
+        return (
+          <button
+            key={lang.code}
+            onClick={() => i18n.changeLanguage(lang.code)}
+            style={{
+              background: active ? '#fff' : 'transparent',
+              color: active ? '#6366f1' : '#9ca3af',
+              border: 'none',
+              padding: '5px 10px',
+              borderRadius: '7px',
+              fontSize: '0.78rem',
+              fontWeight: active ? 700 : 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.15s',
+              boxShadow: active ? '0 1px 4px rgba(0,0,0,0.07)' : 'none',
+              letterSpacing: '0.02em',
+            }}
+          >
+            <span>{lang.icon}</span>
+            <span>{lang.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

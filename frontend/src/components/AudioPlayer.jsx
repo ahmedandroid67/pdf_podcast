@@ -13,7 +13,6 @@ export default function AudioPlayer({ audioUrl, script }) {
   const [resolvedUrl, setResolvedUrl] = useState('');
 
   useEffect(() => {
-    // Reset when URL changes
     setPlaying(false);
     setProgress(0);
     setCurrentTime(0);
@@ -24,51 +23,33 @@ export default function AudioPlayer({ audioUrl, script }) {
     let objectUrl = '';
 
     const loadAudio = async () => {
-      if (!audioUrl) {
-        setResolvedUrl('');
-        return;
-      }
-      if (!audioUrl.startsWith('/api/audio')) {
-        setResolvedUrl(audioUrl);
-        return;
-      }
+      if (!audioUrl) { setResolvedUrl(''); return; }
+      if (!audioUrl.startsWith('/api/audio')) { setResolvedUrl(audioUrl); return; }
       try {
         const token = localStorage.getItem('auth_token');
         const res = await fetch(`${API_BASE}${audioUrl}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        if (!res.ok) {
-          throw new Error('Failed to load audio');
-        }
+        if (!res.ok) throw new Error('Failed to load audio');
         const blob = await res.blob();
         objectUrl = URL.createObjectURL(blob);
-        if (active) {
-          setResolvedUrl(objectUrl);
-        }
+        if (active) setResolvedUrl(objectUrl);
       } catch {
-        if (active) {
-          setResolvedUrl('');
-        }
+        if (active) setResolvedUrl('');
       }
     };
 
     loadAudio();
-
     return () => {
       active = false;
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [audioUrl]);
 
   const toggle = () => {
     if (!audioRef.current) return;
-    if (playing) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
+    if (playing) audioRef.current.pause();
+    else audioRef.current.play();
   };
 
   const onTimeUpdate = () => {
@@ -89,33 +70,36 @@ export default function AudioPlayer({ audioUrl, script }) {
   const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
   return (
-    <div className="card fade-up" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{
+      background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: '16px',
+      padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+    }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div
-          style={{
-            width: '44px', height: '44px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.2rem',
-            boxShadow: '0 0 20px rgba(99,102,241,0.4)',
-          }}
-        >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{
+          width: '46px', height: '46px', borderRadius: '12px',
+          background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '1.2rem',
+          boxShadow: '0 4px 14px rgba(99,102,241,0.28)',
+          flexShrink: 0,
+        }}>
           🎙️
         </div>
-        <div>
-          <p style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: '1rem' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{
+            fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+            fontWeight: 700, fontSize: '0.95rem', color: '#111827', marginBottom: '2px',
+          }}>
             {t('audio_episode')}
           </p>
-          <p style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>{t('audio_narration')}</p>
+          <p style={{ color: '#9ca3af', fontSize: '0.78rem', fontWeight: 500 }}>{t('audio_narration')}</p>
         </div>
-        <div style={{ marginLeft: 'auto' }}>
-          <WaveformBars playing={playing} />
-        </div>
+        <WaveformBars playing={playing} />
       </div>
 
-      {/* Native audio (hidden) */}
+      {/* Hidden audio */}
       <audio
         ref={audioRef}
         src={resolvedUrl}
@@ -127,58 +111,62 @@ export default function AudioPlayer({ audioUrl, script }) {
         preload="metadata"
       />
 
-      {/* Progress bar */}
+      {/* Progress */}
       <div>
+        <div style={{ position: 'relative', height: '5px', background: '#e5e7eb', borderRadius: '99px', overflow: 'hidden', marginBottom: '6px' }}>
+          <div style={{
+            position: 'absolute', left: 0, top: 0, height: '100%',
+            width: `${progress}%`,
+            background: 'linear-gradient(90deg, #6366f1, #818cf8)',
+            borderRadius: '99px',
+            transition: 'width 0.1s linear',
+          }} />
+        </div>
         <input
           id="audio-seek"
           type="range"
-          min="0"
-          max="100"
-          step="0.1"
+          min="0" max="100" step="0.1"
           value={progress}
           onChange={onSeek}
           aria-label="Audio progress"
           style={{
-            width: '100%',
-            accentColor: 'var(--brand-from)',
-            cursor: 'pointer',
+            width: '100%', cursor: 'pointer',
+            accentColor: '#6366f1', position: 'absolute',
+            opacity: 0, height: '5px', marginTop: '-11px',
           }}
         />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-3)', marginTop: '4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#9ca3af', fontWeight: 500 }}>
           <span>{fmt(currentTime)}</span>
           <span>{fmt(duration)}</span>
         </div>
       </div>
 
       {/* Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
-        {/* Rewind 10s */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center' }}>
         <button
           id="rewind-btn"
           className="btn-secondary"
-          style={{ padding: '10px 14px' }}
+          style={{ padding: '9px 14px', fontSize: '0.82rem' }}
           onClick={() => { if (audioRef.current) audioRef.current.currentTime -= 10; }}
           aria-label={t('audio_rewind')}
         >
           {t('audio_rewind')}
         </button>
 
-        {/* Play / Pause */}
         <button
           id="play-pause-btn"
           className="btn-primary"
-          style={{ padding: '12px 32px', fontSize: '1.1rem' }}
+          style={{ padding: '11px 32px', fontSize: '1rem', minWidth: '110px' }}
           onClick={toggle}
           aria-label={playing ? t('audio_pause') : t('audio_play')}
         >
           {playing ? t('audio_pause') : t('audio_play')}
         </button>
 
-        {/* Forward 10s */}
         <button
           id="forward-btn"
           className="btn-secondary"
-          style={{ padding: '10px 14px' }}
+          style={{ padding: '9px 14px', fontSize: '0.82rem' }}
           onClick={() => { if (audioRef.current) audioRef.current.currentTime += 10; }}
           aria-label={t('audio_forward')}
         >
@@ -186,38 +174,37 @@ export default function AudioPlayer({ audioUrl, script }) {
         </button>
       </div>
 
-      {/* Download link */}
+      {/* Download */}
       <a
         id="download-audio-link"
         href={resolvedUrl}
         download
-        style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--brand-from)', textDecoration: 'none' }}
+        style={{
+          textAlign: 'center', fontSize: '0.82rem',
+          color: '#6366f1', textDecoration: 'none', fontWeight: 600,
+          padding: '8px', borderRadius: '8px', transition: 'background 0.15s',
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = '#eef2ff'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       >
-        {t('audio_download')}
+        ↓ {t('audio_download')}
       </a>
 
-      {/* Podcast script */}
+      {/* Script toggle */}
       {script && (
         <details style={{ marginTop: '4px' }}>
-          <summary
-            style={{ cursor: 'pointer', color: 'var(--text-2)', fontSize: '0.88rem', userSelect: 'none', outline: 'none' }}
-          >
-            {t('audio_view_script')}
+          <summary style={{
+            cursor: 'pointer', color: '#6b7280', fontSize: '0.85rem',
+            fontWeight: 600, userSelect: 'none', outline: 'none', listStyle: 'none',
+          }}>
+            {t('audio_view_script')} ▾
           </summary>
-          <div
-            style={{
-              marginTop: '12px',
-              padding: '16px',
-              background: 'var(--surface-3)',
-              borderRadius: '10px',
-              fontSize: '0.88rem',
-              lineHeight: 1.7,
-              color: 'var(--text-2)',
-              whiteSpace: 'pre-wrap',
-              maxHeight: '320px',
-              overflowY: 'auto',
-            }}
-          >
+          <div style={{
+            marginTop: '12px', padding: '16px',
+            background: '#f9fafb', borderRadius: '10px', border: '1px solid #e5e7eb',
+            fontSize: '0.85rem', lineHeight: 1.75, color: '#4b5563',
+            whiteSpace: 'pre-wrap', maxHeight: '300px', overflowY: 'auto',
+          }}>
             {script}
           </div>
         </details>
