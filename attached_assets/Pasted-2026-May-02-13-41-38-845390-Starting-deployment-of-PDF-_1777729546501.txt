@@ -1,0 +1,53 @@
+2026-May-02 13:41:38.845390
+Starting deployment of PDF_PodCast to localhost.
+2026-May-02 13:41:39.177797
+Preparing container with helper image: ghcr.io/coollabsio/coolify-helper:1.0.12
+2026-May-02 13:41:42.506622
+----------------------------------------
+2026-May-02 13:41:42.525278
+Importing ahmedandroid67/pdf_podcast:main (commit sha d89b3e546b28ea79d96eec7686655ba0ce3435c0) to /artifacts/j4kogkokkkgc0kwgk8ok4wgw.
+2026-May-02 13:42:00.535191
+Added 30 ARG declarations to Dockerfile for service frontend (multi-stage build, added to 2 stages).
+2026-May-02 13:42:01.477388
+Added 15 ARG declarations to Dockerfile for service backend.
+2026-May-02 13:42:01.514054
+Pulling & building required images.
+2026-May-02 13:42:02.173631
+Adding build arguments to Docker Compose build command.
+2026-May-02 13:42:16.375694
+========================================
+2026-May-02 13:42:16.390674
+Deployment failed: Command execution failed (exit code 1): docker exec j4kogkokkkgc0kwgk8ok4wgw bash -c 'COOLIFY_BRANCH=main COOLIFY_RESOURCE_UUID=k8ggo8os4oo8w8oo084kwkoc  docker compose --env-file /artifacts/build-time.env --project-name k8ggo8os4oo8w8oo084kwkoc --project-directory /artifacts/j4kogkokkkgc0kwgk8ok4wgw -f /artifacts/j4kogkokkkgc0kwgk8ok4wgw/docker-compose.yaml build --pull --build-arg COOLIFY_URL --build-arg COOLIFY_FQDN --build-arg GOOGLE_CLIENT_ID --build-arg GOOGLE_CLIENT_SECRET --build-arg GITHUB_CLIENT_ID --build-arg GITHUB_CLIENT_SECRET --build-arg REDIRECT_URI --build-arg FRONTEND_URL --build-arg JWT_SECRET_KEY --build-arg DATABASE_URL --build-arg GOOGLE_API_KEY --build-arg SERVICE_FQDN_BACKEND --build-arg SERVICE_URL_BACKEND --build-arg SERVICE_URL_FRONTEND --build-arg SERVICE_FQDN_FRONTEND --build-arg COOLIFY_BUILD_SECRETS_HASH=a5076eacc2ca6cd8a2ad1599b782758d8199127dcd7fb8d058eeb9bdcf949e95'
+2026-May-02 13:42:16.390674
+Error: Dockerfile:22
+2026-May-02 13:42:16.390674
+2026-May-02 13:42:16.390674
+--------------------
+2026-May-02 13:42:16.390674
+2026-May-02 13:42:16.390674
+20 |
+2026-May-02 13:42:16.390674
+2026-May-02 13:42:16.390674
+21 |     COPY package*.json ./
+2026-May-02 13:42:16.390674
+2026-May-02 13:42:16.390674
+22 | >>> RUN npm install
+2026-May-02 13:42:16.390674
+2026-May-02 13:42:16.390674
+23 |
+2026-May-02 13:42:16.390674
+2026-May-02 13:42:16.390674
+24 |     COPY . .
+2026-May-02 13:42:16.390674
+2026-May-02 13:42:16.390674
+--------------------
+2026-May-02 13:42:16.390674
+2026-May-02 13:42:16.390674
+target frontend: failed to solve: process "/bin/sh -c npm install" did not complete successfully: exit code: 1
+2026-May-02 13:42:16.390674
+2026-May-02 13:42:16.390674
+exit status 1
+2026-May-02 13:42:16.591413
+========================================
+2026-May-02 13:42:17.121993
+Gracefully shutting down build container: j4kogkokkkgc0kwgk8ok4wgw
