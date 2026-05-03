@@ -9,7 +9,7 @@ import { AuthProvider } from './context/AuthContext.jsx';
 registerSW({
   onNeedRefresh() {},
   onOfflineReady() {
-    console.log('PdfParser is ready to work offline!');
+    console.log('PdfPodcaster is ready to work offline!');
   },
 });
 

@@ -1,6 +1,6 @@
 """
 main.py
-FastAPI application entry point for the PDF Podcast Summarizer.
+FastAPI application entry point for PdfPodcaster.
 """
 
 import os
@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 from jobs.cleanup_jobs import cleanup_expired_jobs, reset_stale_jobs
 
 app = FastAPI(
-    title="PDF Podcast Summarizer",
+    title="PdfPodcaster API",
     description="Upload a PDF or provide a URL to get an AI-generated podcast summary.",
     version="1.0.0",
 )
@@ -64,7 +64,7 @@ async def on_startup():
 @app.get("/api", summary="API Root")
 async def root():
     return {
-        "message": "Welcome to the PDF Podcast Summarizer API",
+        "message": "Welcome to the PdfPodcaster API",
         "docs": "/docs",
         "health": "/health",
     }

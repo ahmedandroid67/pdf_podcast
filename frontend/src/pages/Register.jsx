@@ -64,7 +64,7 @@ export default function Register() {
           <span style={{
             fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
             fontWeight: 800, fontSize: '1.1rem', color: '#111827', letterSpacing: '-0.02em',
-          }}>PdfParser</span>
+          }}>PdfPodcaster</span>
         </div>
 
         <h1 style={{

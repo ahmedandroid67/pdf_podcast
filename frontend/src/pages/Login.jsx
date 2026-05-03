@@ -8,39 +8,8 @@ import './Login.css';
 
 const STATS = [
   { value: '120K+', key: 'stat_docs' },
-  { value: '4.9+', key: 'stat_rating' },
+  { value: '4.9★', key: 'stat_rating' },
   { value: '40+', key: 'stat_languages' },
-];
-
-const WORKFLOW = [
-  {
-    step: '01',
-    title: 'Upload any PDF',
-    copy: 'Drop reports, class notes, manuals, or research papers into one clean workspace.',
-  },
-  {
-    step: '02',
-    title: 'AI extracts the key ideas',
-    copy: 'The pipeline summarizes, structures, and adapts the content into a listener-friendly script.',
-  },
-  {
-    step: '03',
-    title: 'Listen like a podcast',
-    copy: 'Get a polished audio briefing with language, voice, and pacing controls.',
-  },
-];
-
-const PREVIEW_POINTS = [
-  'Narration ready in under 30 seconds',
-  'Multi-language voice output',
-  'Progress tracking while audio renders',
-];
-
-const PLANS = [
-  { id: 'free', price: '$0', nameKey: 'plan_name_free' },
-  { id: 'basic', price: '$7', nameKey: 'plan_name_basic' },
-  { id: 'pro', price: '$19', nameKey: 'plan_name_pro' },
-  { id: 'business', price: '$69', nameKey: 'plan_name_business' },
 ];
 
 const TESTIMONIAL = {
@@ -51,14 +20,14 @@ const TESTIMONIAL = {
 };
 
 const EyeIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
 const EyeOffIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
     <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
     <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
@@ -75,15 +44,11 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const AudioBars = () => (
-  <div className="lp-audio-bars" aria-hidden="true">
-    <span />
-    <span />
-    <span />
-    <span />
-    <span />
-    <span />
-    <span />
+const WaveformIcon = () => (
+  <div className="login-waveform" aria-hidden="true">
+    {[8, 20, 14, 28, 18, 10, 24, 16, 6, 22, 12, 26, 10, 18, 8, 22].map((h, i) => (
+      <span key={i} style={{ height: `${h}px`, opacity: i > 7 ? 0.3 : 1 }} />
+    ))}
   </div>
 );
 
@@ -103,11 +68,10 @@ export default function Login() {
     window.location.href = `${API_BASE}/auth/google`;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setLoading(true);
     setError('');
-
     try {
       await login(email, password);
       navigate('/');
@@ -119,184 +83,129 @@ export default function Login() {
   };
 
   return (
-    <div className="lp-root">
-      <div className="lp-background" aria-hidden="true">
-        <div className="lp-orb lp-orb-one" />
-        <div className="lp-orb lp-orb-two" />
-        <div className="lp-grid-glow" />
+    <div className="login-root">
+      {/* ── Left: brand panel ── */}
+      <div className="login-brand-panel">
+        <div className="login-brand-glow login-brand-glow--top" aria-hidden="true" />
+        <div className="login-brand-glow login-brand-glow--bottom" aria-hidden="true" />
+
+        {/* Logo */}
+        <div className="login-logo">
+          <div className="login-logo-mark">P</div>
+          <span className="login-logo-name">{t('login_brand_name', 'PdfPodcaster')}</span>
+        </div>
+
+        {/* Headline */}
+        <div className="login-brand-body">
+          <p className="login-eyebrow">{t('login_eyebrow', 'Turn reading time into listening time')}</p>
+          <h1 className="login-headline">
+            {t('login_headline_1', 'Dense docs,')}
+            <br />
+            <span>{t('login_headline_2', 'clear audio briefings.')}</span>
+          </h1>
+          <p className="login-brand-sub">
+            {t('login_hero_sub', 'Upload a PDF and get a polished spoken summary with multilingual narration built in.')}
+          </p>
+
+          {/* Audio preview card */}
+          <div className="login-audio-card">
+            <div className="login-audio-card-top">
+              <div>
+                <p className="login-audio-label">{t('login_now_playing', 'Now playing')}</p>
+                <p className="login-audio-title">{t('login_preview_file', 'Weekly AI research digest')}</p>
+                <p className="login-audio-meta">{t('login_wave_meta', '11 min · English · 1.0×')}</p>
+              </div>
+              <div className="login-play-btn" aria-hidden="true">
+                <div className="login-play-icon" />
+              </div>
+            </div>
+            <WaveformIcon />
+            <div className="login-progress-bar">
+              <div className="login-progress-fill" />
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="login-stats">
+            {STATS.map((stat) => (
+              <div key={stat.key} className="login-stat">
+                <strong>{stat.value}</strong>
+                <span>{t(stat.key)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Testimonial */}
+        <blockquote className="login-testimonial">
+          <p>"{t(TESTIMONIAL.key)}"</p>
+          <footer>
+            <div className="login-avatar">{TESTIMONIAL.initials}</div>
+            <div>
+              <cite>{t(TESTIMONIAL.nameKey)}</cite>
+              <span>{t(TESTIMONIAL.roleKey)}</span>
+            </div>
+          </footer>
+        </blockquote>
       </div>
 
-      <section className="lp-hero">
-        <div className="lp-topbar fade-in d100">
-          <div className="lp-brand">
-            <div className="lp-brand-mark">P</div>
-            <div className="lp-brand-copy">
-              <span className="lp-brand-name">PdfParser</span>
-              <span className="lp-brand-tag">Audio-first document summaries</span>
-            </div>
-          </div>
-          <div className="lp-hero-chip">Trusted by researchers, operators, and students</div>
-        </div>
-
-        <div className="lp-hero-copy fade-in d200">
-          <p className="lp-eyebrow">Turn reading time into listening time</p>
-          <h1 className="lp-headline">
-            Dense documents, <span>clear audio briefings.</span>
-          </h1>
-          <p className="lp-sub">
-            Upload a PDF and get a polished spoken summary with structure, pacing, and multilingual narration built in.
-          </p>
-        </div>
-
-        <div className="lp-hero-main">
-          <div className="lp-preview-card fade-in d300">
-            <div className="lp-preview-top">
-              <div>
-                <p className="lp-preview-label">Live product preview</p>
-                <h2>Weekly AI research digest.pdf</h2>
-              </div>
-              <div className="lp-preview-status">Processing</div>
-            </div>
-
-            <div className="lp-preview-body">
-              <div className="lp-doc-card">
-                <div className="lp-doc-icon">PDF</div>
-                <div>
-                  <p className="lp-doc-title">Document uploaded</p>
-                  <p className="lp-doc-meta">84 pages • English • Academic paper</p>
-                </div>
-              </div>
-
-              <div className="lp-flow-row">
-                <div className="lp-flow-node lp-flow-node-active">
-                  <span>1</span>
-                  <strong>Extract</strong>
-                </div>
-                <div className="lp-flow-line" />
-                <div className="lp-flow-node lp-flow-node-active">
-                  <span>2</span>
-                  <strong>Summarize</strong>
-                </div>
-                <div className="lp-flow-line" />
-                <div className="lp-flow-node">
-                  <span>3</span>
-                  <strong>Narrate</strong>
-                </div>
-              </div>
-
-              <div className="lp-wave-card">
-                <div className="lp-wave-copy">
-                  <p className="lp-wave-label">Podcast output</p>
-                  <h3>Executive audio brief</h3>
-                  <span>11 min listen • warm voice • 1.0x speed</span>
-                </div>
-                <AudioBars />
-              </div>
-
-              <div className="lp-preview-points">
-                {PREVIEW_POINTS.map((item) => (
-                  <div key={item} className="lp-point">
-                    <span className="lp-point-dot" />
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="lp-side-stack">
-            <div className="lp-stats-card fade-in d400">
-              {STATS.map((stat) => (
-                <div key={stat.key} className="lp-stat">
-                  <strong>{stat.value}</strong>
-                  <span>{t(stat.key)}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="lp-workflow-card fade-in d500">
-              <p className="lp-section-kicker">How it works</p>
-              <div className="lp-workflow-list">
-                {WORKFLOW.map((item) => (
-                  <div key={item.step} className="lp-workflow-item">
-                    <div className="lp-workflow-step">{item.step}</div>
-                    <div>
-                      <h3>{item.title}</h3>
-                      <p>{item.copy}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="lp-quote-card fade-in d600">
-              <p className="lp-quote-text">{t(TESTIMONIAL.key)}</p>
-              <div className="lp-quote-author">
-                <div className="lp-avatar">{TESTIMONIAL.initials}</div>
-                <div>
-                  <strong>{t(TESTIMONIAL.nameKey)}</strong>
-                  <span>{t(TESTIMONIAL.roleKey)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <aside className="lp-auth-shell">
-        <div className="lp-lang-pos">
+      {/* ── Right: auth panel ── */}
+      <aside className="login-auth-panel">
+        <div className="login-lang-pos">
           <LanguageSelector />
         </div>
 
-        <div className="lp-auth-card">
-          <div className="lp-form-tag fade-in d100">
-            <div className="lp-form-tag-dot" />
+        <div className="login-auth-card">
+          {/* Secure badge */}
+          <div className="login-secure-badge">
+            <span className="login-secure-dot" />
             {t('secure_login', 'Secure login')}
           </div>
 
-          <div className="fade-in d200">
-            <h2 className="lp-form-title">
-              {t('login_title_1', 'Welcome')} <span>{t('login_title_2', 'back.')}</span>
-            </h2>
-            <p className="lp-form-subtitle">
-              {t('login_subtitle', 'Sign in to continue your podcast summaries.')}
-            </p>
-          </div>
+          <h2 className="login-form-title">
+            {t('login_title_1', 'Welcome')} <span>{t('login_title_2', 'back.')}</span>
+          </h2>
+          <p className="login-form-sub">
+            {t('login_subtitle', 'Sign in to continue your podcast summaries.')}
+          </p>
 
-          <button className="lp-google-btn fade-in d300" onClick={handleGoogleLogin}>
+          {/* Google OAuth — primary CTA */}
+          <button className="login-google-btn" onClick={handleGoogleLogin} type="button">
             <GoogleIcon />
             {t('continue_google', 'Continue with Google')}
           </button>
 
-          <div className="lp-divider fade-in d400">
+          <div className="login-divider">
             <span>{t('continue_email', 'or continue with email')}</span>
           </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="lp-field fade-in d400">
-              <label className="lp-label" htmlFor="lp-email">{t('email', 'Email')}</label>
-              <div className="lp-input-wrap">
-                <input
-                  id="lp-email"
-                  type="email"
-                  className="lp-input"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                />
-              </div>
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="login-field">
+              <label className="login-label" htmlFor="login-email">
+                {t('email', 'Email')}
+              </label>
+              <input
+                id="login-email"
+                type="email"
+                className="login-input"
+                placeholder="name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
             </div>
 
-            <div className="lp-field fade-in d500">
-              <label className="lp-label" htmlFor="lp-pw">{t('password', 'Password')}</label>
-              <div className="lp-input-wrap">
+            <div className="login-field">
+              <label className="login-label" htmlFor="login-password">
+                {t('password', 'Password')}
+              </label>
+              <div className="login-input-wrap">
                 <input
-                  id="lp-pw"
+                  id="login-password"
                   type={showPassword ? 'text' : 'password'}
-                  className="lp-input"
-                  placeholder="Enter your password"
+                  className="login-input"
+                  placeholder={t('login_password_placeholder', 'Enter your password')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -304,57 +213,52 @@ export default function Login() {
                 />
                 <button
                   type="button"
-                  className="lp-input-icon"
-                  onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="login-eye-btn"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? t('hide_password', 'Hide password') : t('show_password', 'Show password')}
                 >
                   {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               </div>
             </div>
 
-            <div className="lp-bottom-row fade-in d500">
-              <label className="lp-remember">
-                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+            <div className="login-row-between">
+              <label className="login-remember">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
                 {t('remember_me', 'Remember me')}
               </label>
-              <Link to="#" className="lp-forgot">{t('forgot_password', 'Forgot password?')}</Link>
+              <Link to="/forgot-password" className="login-forgot">
+                {t('forgot_password', 'Forgot password?')}
+              </Link>
             </div>
 
-            {error ? <div className="lp-error"><span>!</span>{error}</div> : null}
+            {error && (
+              <div className="login-error" role="alert">
+                <span aria-hidden="true">!</span>
+                {error}
+              </div>
+            )}
 
-            <button type="submit" className="lp-submit fade-in d600" disabled={loading}>
-              {loading ? <span className="lp-spinner" /> : t('login_action', 'Sign in')}
+            <button type="submit" className="login-submit-btn" disabled={loading}>
+              {loading ? <span className="login-spinner" aria-label={t('loading', 'Loading')} /> : t('login_action', 'Sign in')}
             </button>
           </form>
 
-          <p className="lp-signup fade-in d700">
+          <p className="login-signup-row">
             {t('no_account', 'New here?')}{' '}
             <Link to="/register">{t('create_free_account', 'Create a free account')}</Link>
           </p>
 
-          <div className="lp-trust fade-in d700">
-            <span className="lp-trust-item">256-bit SSL</span>
-            <span className="lp-trust-dot" />
-            <span className="lp-trust-item">GDPR compliant</span>
-            <span className="lp-trust-dot" />
-            <span className="lp-trust-item">No spam</span>
-          </div>
-        </div>
-
-        <div className="lp-plan-teaser fade-in d700">
-          <div className="lp-plan-copy">
-            <p className="lp-section-kicker">Flexible pricing</p>
-            <h3>Start free, upgrade when the workflow clicks.</h3>
-            <span>Paid plans begin at $7/month and scale up to team usage.</span>
-          </div>
-          <div className="lp-plan-pills">
-            {PLANS.map((plan) => (
-              <div key={plan.id} className={`lp-plan-pill${plan.id === 'pro' ? ' lp-plan-pill-featured' : ''}`}>
-                <strong>{plan.price}</strong>
-                <span>{t(plan.nameKey)}</span>
-              </div>
-            ))}
+          <div className="login-trust-row">
+            <span>{t('trust_ssl', '256-bit SSL')}</span>
+            <span className="login-trust-dot" />
+            <span>{t('trust_gdpr', 'GDPR compliant')}</span>
+            <span className="login-trust-dot" />
+            <span>{t('trust_spam', 'No spam')}</span>
           </div>
         </div>
       </aside>
