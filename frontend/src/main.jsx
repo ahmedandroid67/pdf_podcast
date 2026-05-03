@@ -7,7 +7,10 @@ import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx';
 
 registerSW({
-  onNeedRefresh() {},
+  immediate: true,
+  onNeedRefresh() {
+    window.location.reload();
+  },
   onOfflineReady() {
     console.log('PdfPodcaster is ready to work offline!');
   },
