@@ -345,14 +345,6 @@ async def health():
 _FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
 if _FRONTEND_DIST.exists():
-    # Serve compiled JS/CSS/assets
-    app.mount("/assets", StaticFiles(directory=_FRONTEND_DIST / "assets"), name="assets")
-
-    # Serve any other static file (favicon, manifest, icons, sw.js, etc.)
-    # then fall back to index.html for all SPA routes
-    @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
-        candidate = _FRONTEND_DIST / full_path
-        if candidate.is_file():
-            return FileResponse(candidate)
-        return FileResponse(_FRONTEND_DIST / "index.html")
+    # Mount the built frontend as a complete SPA so hashed CSS/JS, icons,
+    # manifest, and client-side routes are all served through one static handler.
+    app.mount("/", StaticFiles(directory=_FRONTEND_DIST, html=True), name="frontend")
