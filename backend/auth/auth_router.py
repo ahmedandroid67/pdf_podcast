@@ -53,26 +53,30 @@ async def google_login(request: Request):
 @router.get("/callback/google")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
     try:
-        token = await oauth.google.authorize_access_token(request)
-    except Exception:
-        return _frontend_login_redirect("google_oauth_failed")
-
-    user_info = token.get("userinfo")
-    if not user_info:
         try:
-            user_info = await oauth.google.userinfo(token=token)
+            token = await oauth.google.authorize_access_token(request)
         except Exception:
-            return _frontend_login_redirect("google_userinfo_failed")
+            return _frontend_login_redirect("google_oauth_failed")
 
-    email = (user_info or {}).get("email")
-    if not email:
-        return _frontend_login_redirect("google_email_missing")
+        user_info = token.get("userinfo")
+        if not user_info:
+            try:
+                user_info = await oauth.google.userinfo(token=token)
+            except Exception:
+                return _frontend_login_redirect("google_userinfo_failed")
 
-    user = get_user_by_email(db, email)
-    if not user:
-        user = create_user(db, email, None)
+        email = (user_info or {}).get("email")
+        if not email:
+            return _frontend_login_redirect("google_email_missing")
 
-    access_token = create_access_token(str(user.id))
+        user = get_user_by_email(db, email)
+        if not user:
+            user = create_user(db, email, None)
+
+        access_token = create_access_token(str(user.id))
+    except Exception:
+        return _frontend_login_redirect("auth_failed")
+
     frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173').rstrip("/")
     return RedirectResponse(url=f"{frontend_url}/oauth-callback?token={access_token}")
 

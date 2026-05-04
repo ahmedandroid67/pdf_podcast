@@ -343,9 +343,16 @@ app.include_router(job_router)
 app.include_router(admin_router)
 
 
+from sqlalchemy import text
+
 @app.get("/health")
-async def health():
-    return {"status": "ok"}
+async def health(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        db_status = "ok"
+    except Exception as exc:
+        db_status = f"error: {exc}"
+    return {"status": "ok", "database": db_status}
 
 
 # ---------------------------------------------------------------------------
