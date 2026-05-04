@@ -25,30 +25,61 @@ oauth.register(
     }
 )
 
+
+def _frontend_login_redirect(error_code: str) -> RedirectResponse:
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+    return RedirectResponse(url=f"{frontend_url}/login?error={error_code}")
+
+
+def _google_redirect_uri(request: Request) -> str:
+    configured_redirect = os.getenv("REDIRECT_URI")
+    if configured_redirect:
+        return configured_redirect
+
+    callback_url = str(request.url_for("google_callback"))
+    forwarded_proto = request.headers.get("x-forwarded-proto")
+    if forwarded_proto:
+        callback_url = callback_url.replace(request.url.scheme, forwarded_proto, 1)
+    return callback_url
+
 @router.get("/google")
 async def google_login(request: Request):
-    redirect_uri = os.getenv('REDIRECT_URI')
+    if not os.getenv("GOOGLE_CLIENT_ID") or not os.getenv("GOOGLE_CLIENT_SECRET"):
+        raise HTTPException(status_code=503, detail="Google OAuth is not configured.")
+
+    redirect_uri = _google_redirect_uri(request)
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @router.get("/callback/google")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
-    token = await oauth.google.authorize_access_token(request)
-    user_info = token.get('userinfo')
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except Exception:
+        return _frontend_login_redirect("google_oauth_failed")
+
+    user_info = token.get("userinfo")
     if not user_info:
-        raise HTTPException(status_code=400, detail="Google authentication failed.")
-    
-    email = user_info.get('email')
+        try:
+            user_info = await oauth.google.userinfo(token=token)
+        except Exception:
+            return _frontend_login_redirect("google_userinfo_failed")
+
+    email = (user_info or {}).get("email")
+    if not email:
+        return _frontend_login_redirect("google_email_missing")
+
     user = get_user_by_email(db, email)
     if not user:
-        user = create_user(db, email, None) # password is None for social users
-    
+        user = create_user(db, email, None)
+
     access_token = create_access_token(str(user.id))
-    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173').rstrip("/")
     return RedirectResponse(url=f"{frontend_url}/oauth-callback?token={access_token}")
 
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-def register(payload: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+def register(request: Request, payload: UserCreate, db: Session = Depends(get_db)):
     if get_user_by_email(db, payload.email):
         raise HTTPException(status_code=400, detail="Email is already registered.")
     user = create_user(db, payload.email, payload.password)

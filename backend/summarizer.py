@@ -5,6 +5,27 @@ import asyncio
 
 logger = logging.getLogger(__name__)
 
+
+def chunk_text(text: str, size: int = 3000, overlap: int = 200) -> list[str]:
+    """Split long text into overlapping chunks for LLM processing."""
+    if not text or not text.strip():
+        return []
+    text = text.strip()
+    if len(text) <= size:
+        return [text]
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = min(start + size, len(text))
+        if end < len(text):
+            end = text.rfind(" ", start, end)
+            if end <= start:
+                end = min(start + size, len(text))
+        chunks.append(text[start:end])
+        start = max(end - overlap, start + 1)
+    return chunks
+
+
 LANG_MAP = {
     "en": "English",
     "fr": "French",

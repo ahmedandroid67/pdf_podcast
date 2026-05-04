@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from auth.auth_dependencies import get_current_user
 from database.database import get_db
+from database.models import User
 from utils.plan_utils import get_user_plan_limits, check_token_limit
 
 
@@ -12,15 +13,12 @@ def _reset_quota_if_needed(user, db: Session):
     now = datetime.utcnow()
     changed = False
 
-    # 1. Daily Reset (24h)
     if user.quota_reset_at + timedelta(hours=24) <= now:
         user.used_today = 0
         user.tokens_used_today = 0
         user.quota_reset_at = now
         changed = True
 
-    # 2. Monthly Reset (30 days approx)
-    # Using simple 30-day window or actual calendar month? Let's go with 30 days for consistency.
     if user.month_reset_at + timedelta(days=30) <= now:
         user.tokens_used_month = 0
         user.month_reset_at = now
@@ -28,35 +26,37 @@ def _reset_quota_if_needed(user, db: Session):
 
     if changed:
         db.add(user)
-        db.commit()
-        db.refresh(user)
+        db.flush()
 
 
 def check_user_quota(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Enforces daily document and monthly token limits."""
-    _reset_quota_if_needed(current_user, db)
-    
-    limits = get_user_plan_limits(current_user)
-    
-    # 1. Daily doc limit
-    if current_user.used_today >= limits.daily_docs:
+    """Enforces daily document and monthly token limits.
+
+    Re-queries the user with FOR UPDATE to serialize concurrent requests."""
+    user = db.query(User).filter(User.id == current_user.id).with_for_update().first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    _reset_quota_if_needed(user, db)
+
+    limits = get_user_plan_limits(user)
+
+    if user.used_today >= limits.daily_docs:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Daily document limit reached for {current_user.plan} plan.",
+            detail=f"Daily document limit reached for {user.plan} plan.",
         )
-    
-    # 2. Monthly token limit
-    is_ok, msg = check_token_limit(current_user)
+
+    is_ok, msg = check_token_limit(user)
     if not is_ok:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=msg,
         )
-        
-    return current_user
+
+    return user
 
 
 def increment_usage(user, db: Session, tokens: int = 0):

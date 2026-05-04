@@ -8,7 +8,7 @@ import httpx
 
 from auth.auth_dependencies import get_current_user
 from database.database import get_db, SessionLocal
-from database.models import PodcastJob
+from database.models import PodcastJob, User
 from jobs.job_service import (
     create_job,
     get_job_for_user,
@@ -76,8 +76,7 @@ async def _run_pipeline_bg(
             db.add(job)
 
             from middleware.quota_limit import increment_usage
-            user = db.query(__import__("database.models", fromlist=["User"]).User)\
-                .filter_by(id=user_id).first()
+            user = db.query(User).filter(User.id == user_id).first()
             if user:
                 increment_usage(user, db, total_tokens)
 

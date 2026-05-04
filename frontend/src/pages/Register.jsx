@@ -1,8 +1,21 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import LanguageSelector from '../components/LanguageSelector';
+
+function getPasswordStrength(password) {
+  if (!password) return { score: 0, label: '', color: '#d1d5db' };
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  if (score <= 1) return { score, label: 'Weak', color: '#ef4444' };
+  if (score <= 3) return { score, label: 'Fair', color: '#f59e0b' };
+  return { score, label: 'Strong', color: '#22c55e' };
+}
 
 export default function Register() {
   const { t } = useTranslation();
@@ -12,6 +25,7 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const strength = useMemo(() => getPasswordStrength(password), [password]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -109,6 +123,27 @@ export default function Register() {
           minLength={8}
           required
         />
+        {password && (
+          <div style={{ marginTop: '8px', marginBottom: '6px' }}>
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    height: '4px',
+                    borderRadius: '2px',
+                    background: i <= strength.score ? strength.color : '#e5e7eb',
+                    transition: 'background 0.2s',
+                  }}
+                />
+              ))}
+            </div>
+            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: strength.color }}>
+              {strength.label}
+            </span>
+          </div>
+        )}
 
         {error && (
           <div style={{

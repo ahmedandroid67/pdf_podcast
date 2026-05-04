@@ -83,7 +83,10 @@ app.add_middleware(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("JWT_SECRET_KEY"))
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SESSION_SECRET_KEY", os.getenv("JWT_SECRET_KEY", ""))
+)
 
 Base.metadata.create_all(bind=engine)
 
@@ -91,10 +94,16 @@ import traceback
 from fastapi.responses import JSONResponse
 
 @app.exception_handler(Exception)
-async def debug_exception_handler(request, exc):
+async def global_exception_handler(request, exc):
+    logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
+    if os.getenv("DEBUG") == "true":
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(exc), "trace": traceback.format_exc()},
+        )
     return JSONResponse(
         status_code=500,
-        content={"detail": str(exc), "trace": traceback.format_exc()}
+        content={"detail": "An internal error occurred. Please try again later."},
     )
 
 # ---------------------------------------------------------------------------

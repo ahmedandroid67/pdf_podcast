@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../api';
@@ -79,6 +79,7 @@ export default function Login() {
   const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -86,6 +87,13 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const oauthError = searchParams.get('error');
+  const oauthErrorMessage = oauthError && oauthError.startsWith('google_')
+    ? 'Google sign-in could not be completed. Please try again.'
+    : oauthError === 'auth_failed'
+      ? 'Authentication could not be completed. Please try again.'
+      : '';
 
   const handleGoogleLogin = () => {
     window.location.href = `${API_BASE}/auth/google`;
@@ -309,7 +317,9 @@ export default function Login() {
               <Link to="#" className="lp-forgot">{t('forgot_password', 'Forgot password?')}</Link>
             </div>
 
-            {error ? <div className="lp-error"><span>!</span>{error}</div> : null}
+            {error || oauthErrorMessage ? (
+              <div className="lp-error"><span>!</span>{error || oauthErrorMessage}</div>
+            ) : null}
 
             <button type="submit" className="lp-submit fade-in d600" disabled={loading}>
               {loading ? <span className="lp-spinner" /> : t('login_action', 'Sign in')}

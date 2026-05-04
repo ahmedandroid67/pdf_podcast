@@ -21,5 +21,12 @@ RUN mkdir -p static/audio
 # Expose the port
 EXPOSE 8000
 
-# Run the app
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD python -c "import httpx; httpx.get('http://localhost:8000/health')" || exit 1
+
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

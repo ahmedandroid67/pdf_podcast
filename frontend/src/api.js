@@ -33,49 +33,53 @@ async function handleResponse(res) {
 }
 
 /** Upload a PDF File object → { text } */
-export async function uploadPdf(file) {
+export async function uploadPdf(file, { signal } = {}) {
   const form = new FormData();
   form.append('file', file);
   const res = await fetch(`${BASE}/upload`, {
     method: 'POST',
     headers: authHeaders(),
     body: form,
+    signal,
   });
   return handleResponse(res);
 }
 
 /** Fetch PDF from URL → { text } */
-export async function fetchPdfUrl(url) {
+export async function fetchPdfUrl(url, { signal } = {}) {
   const res = await fetch(`${BASE}/url`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ url }),
+    signal,
   });
   return handleResponse(res);
 }
 
 /** Summarize extracted text → { summary } */
-export async function summarizeText(text, lang = 'en', mode = 'podcast') {
+export async function summarizeText(text, lang = 'en', mode = 'podcast', { signal } = {}) {
   const res = await fetch(`${BASE}/summarize`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ text, lang, mode }),
+    signal,
   });
   return handleResponse(res);
 }
 
 /** Generate podcast script + audio from summary → { script, audio_url } */
-export async function generatePodcast(summary, lang = 'en', mode = 'podcast') {
+export async function generatePodcast(summary, lang = 'en', mode = 'podcast', { signal } = {}) {
   const res = await fetch(`${BASE}/podcast`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ summary, lang, mode }),
+    signal,
   });
   return handleResponse(res);
 }
 
 /** Start full pipeline (upload) → { job_id, status } */
-export async function processPdfUpload(file, lang = 'en', mode = 'podcast') {
+export async function processPdfUpload(file, lang = 'en', mode = 'podcast', { signal } = {}) {
   const form = new FormData();
   form.append('file', file);
   form.append('lang', lang);
@@ -84,145 +88,159 @@ export async function processPdfUpload(file, lang = 'en', mode = 'podcast') {
     method: 'POST',
     headers: authHeaders(),
     body: form,
+    signal,
   });
   return handleResponse(res);
 }
 
 /** Start full pipeline (URL) → { job_id, status } */
-export async function processPdfUrl(url, lang = 'en', mode = 'podcast') {
+export async function processPdfUrl(url, lang = 'en', mode = 'podcast', { signal } = {}) {
   const res = await fetch(`${BASE}/process/url`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ url, lang, mode }),
+    signal,
   });
   return handleResponse(res);
 }
 
 /** Poll pipeline progress → { job_id, step, status } */
-export async function fetchJobProgress(jobId) {
+export async function fetchJobProgress(jobId, { signal } = {}) {
   const res = await fetch(`${BASE}/jobs/${jobId}/progress`, {
     headers: authHeaders(),
+    signal,
   });
   return handleResponse(res);
 }
 
 /** Fetch final result (text/summary/script/audio_url) once completed */
-export async function fetchJobResult(jobId) {
+export async function fetchJobResult(jobId, { signal } = {}) {
   const res = await fetch(`${BASE}/jobs/${jobId}/result`, {
     headers: authHeaders(),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function fetchJobs() {
+export async function fetchJobs({ signal } = {}) {
   const res = await fetch(`${BASE}/jobs`, {
     method: 'GET',
     headers: authHeaders(),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function loginUser(email, password) {
+export async function loginUser(email, password, { signal } = {}) {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function registerUser(email, password) {
+export async function registerUser(email, password, { signal } = {}) {
   const res = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function fetchMe() {
+export async function fetchMe({ signal } = {}) {
   const res = await fetch(`${API_BASE}/auth/me`, {
     method: 'GET',
     headers: authHeaders(),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function changePassword(newPassword) {
+export async function changePassword(newPassword, { signal } = {}) {
   const res = await fetch(`${API_BASE}/auth/change-password`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ new_password: newPassword }),
+    signal,
   });
   return handleResponse(res);
 }
 
 // ---- Admin API ----
 
-export async function fetchAdminStats() {
+export async function fetchAdminStats({ signal } = {}) {
   const res = await fetch(`${API_BASE}/api/admin/stats`, {
     headers: authHeaders(),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function fetchAdminUsers() {
+export async function fetchAdminUsers({ signal } = {}) {
   const res = await fetch(`${API_BASE}/api/admin/users`, {
     headers: authHeaders(),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function adminCreateUser(data) {
+export async function adminCreateUser(data, { signal } = {}) {
   const res = await fetch(`${API_BASE}/api/admin/users`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(data),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function adminUpdateUser(userId, data) {
+export async function adminUpdateUser(userId, data, { signal } = {}) {
   const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
     method: 'PUT',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(data),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function adminResetPassword(userId, password) {
+export async function adminResetPassword(userId, password, { signal } = {}) {
   const res = await fetch(`${API_BASE}/api/admin/users/${userId}/reset-password`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ password }),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function adminBulkDeleteOldUsers() {
+export async function adminBulkDeleteOldUsers({ signal } = {}) {
   const res = await fetch(`${API_BASE}/api/admin/users/bulk/old`, {
     method: 'DELETE',
     headers: authHeaders(),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function adminToggleUserStatus(userId) {
+export async function adminToggleUserStatus(userId, { signal } = {}) {
   const res = await fetch(`${API_BASE}/api/admin/users/${userId}/status`, {
     method: 'PUT',
     headers: authHeaders(),
+    signal,
   });
   return handleResponse(res);
 }
 
-export async function adminDeleteUser(userId) {
+export async function adminDeleteUser(userId, { signal } = {}) {
   const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
     method: 'DELETE',
     headers: authHeaders(),
+    signal,
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.detail || `HTTP ${res.status}`);
-  }
+  return handleResponse(res);
 }

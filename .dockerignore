@@ -1,0 +1,64 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/.pytest_cache/
+backend/*/__pycache__/
+backend/*/*/__pycache__/
+
+# Environment
+**/.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary
+tmp/
+temp/
+
+# Tests (not needed in production image)
+**/tests/
+**/test_*.py
+backend/test_*.py
+
+# Migrations (ad-hoc scripts, not Alembic versioned ones)
+backend/migrate_*.py
+backend/list_*.py
+backend/reset_*.py
+backend/update_*.py
+backend/make_admin.py
+backend/verify_parser.py
+
+# Storage data (mount as volumes)
+backend/storage/
+backend/static/audio/
+
+# Package lock files (only needed for dev)
+backend/poetry.lock
+
+# Docs/marketing
+marketing/
+tasks/
+personal/
