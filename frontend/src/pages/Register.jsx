@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import LanguageSelector from '../components/LanguageSelector';
+import ThemeToggle from '../components/ThemeToggle';
 
 function getPasswordStrength(password) {
   if (!password) return { score: 0, label: '', color: '#d1d5db' };
@@ -47,22 +48,23 @@ export default function Register() {
       display: 'grid',
       placeItems: 'center',
       padding: '20px',
-      background: 'radial-gradient(circle at 60% 10%, rgba(99,102,241,0.06) 0%, transparent 55%), #fafafa',
+      background: 'var(--surface)',
     }}>
       <form
         onSubmit={handleSubmit}
         style={{
-          background: '#fff',
-          border: '1.5px solid #e5e7eb',
+          background: 'var(--surface-2)',
+          border: '1.5px solid var(--border)',
           borderRadius: '20px',
           padding: '36px 32px',
           width: '100%',
           maxWidth: '420px',
           position: 'relative',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.04)',
+          boxShadow: 'var(--shadow-md)',
         }}
       >
-        <div style={{ position: 'absolute', top: '16px', right: '16px' }}>
+        <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <ThemeToggle />
           <LanguageSelector />
         </div>
 
@@ -77,20 +79,8 @@ export default function Register() {
           }}>🎙️</div>
           <span style={{
             fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
-            fontWeight: 800, fontSize: '1.1rem', color: '#111827', letterSpacing: '-0.02em',
+            fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-1)', letterSpacing: '-0.02em',
           }}>PdfPodcaster</span>
-        </div>
-
-        <h1 style={{
-          fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
-          fontWeight: 800, fontSize: '1.55rem',
-          marginBottom: '6px', color: '#111827', letterSpacing: '-0.02em',
-        }}>
-          {t('register_title')}
-        </h1>
-        <p style={{ color: '#9ca3af', fontSize: '0.875rem', marginBottom: '24px', fontWeight: 500 }}>
-          {t('register_subtitle')}
-        </p>
 
         <label style={{
           display: 'block', fontSize: '0.72rem', color: '#6b7280',
@@ -133,7 +123,7 @@ export default function Register() {
                     flex: 1,
                     height: '4px',
                     borderRadius: '2px',
-                    background: i <= strength.score ? strength.color : '#e5e7eb',
+                    background: i <= strength.score ? strength.color : 'var(--border)',
                     transition: 'background 0.2s',
                   }}
                 />

@@ -8,6 +8,7 @@ import AudioPlayer from './AudioPlayer';
 import LanguageSelector from './LanguageSelector';
 import AudioModeSelector from './AudioModeSelector';
 import PodcastLanguageSelector from './PodcastLanguageSelector';
+import ThemeToggle from './ThemeToggle';
 import './PodcastPipeline.css';
 
 const STEP = { UPLOAD: 0, EXTRACT: 1, SUMMARIZE: 2, PODCAST: 3, AUDIO: 4 };
@@ -309,6 +310,7 @@ export default function PodcastPipeline({ onJobCreated, embedded = false }) {
             <span className="pp-logo-name">Pdf<em>Parser</em></span>
           </div>
           <div className="pp-header-right">
+            <ThemeToggle />
             <LanguageSelector />
           </div>
         </div>

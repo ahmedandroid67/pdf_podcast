@@ -18,8 +18,8 @@ function PageLoader() {
       justifyContent: 'center',
       minHeight: '100vh',
       fontFamily: "'Inter', system-ui, sans-serif",
-      background: '#f5f4ff',
-      color: '#6366f1',
+      background: 'var(--surface)',
+      color: 'var(--brand)',
       fontSize: '1rem',
     }}>
       Loading...

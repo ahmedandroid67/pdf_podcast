@@ -1308,3 +1308,5 @@ npm run dev
 
 
 
+google authentification :
+https://console.cloud.google.com/apis/credentials?project=project-aa652ce1-6be0-438a-9e7

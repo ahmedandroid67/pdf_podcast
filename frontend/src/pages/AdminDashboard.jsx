@@ -11,14 +11,16 @@ import {
   fetchAdminStats,
   fetchAdminUsers,
 } from '../api';
+import ThemeToggle from '../components/ThemeToggle';
+import LanguageSelector from '../components/LanguageSelector';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const PLAN_COLORS = {
-  free: '#6366f1',
-  basic: '#10b981',
-  pro: '#f59e0b',
-  business: '#ec4899',
+  free: 'var(--plan-free)',
+  basic: 'var(--plan-basic)',
+  pro: 'var(--plan-pro)',
+  business: 'var(--plan-business)',
 };
 
 const statCard = (icon, label, value, accent) => (
@@ -367,6 +369,8 @@ export default function AdminDashboard() {
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <ThemeToggle />
+          <LanguageSelector />
           <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>{me?.email}</span>
           <Link to="/" className="btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 14px' }}>← Back to Studio</Link>
           <button className="btn-secondary" onClick={logout} style={{ fontSize: '0.8rem' }}>Log out</button>

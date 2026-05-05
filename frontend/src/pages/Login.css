@@ -18,6 +18,23 @@
   --lp-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.dark {
+  --lp-bg: #0f172a;
+  --lp-bg-2: #1e293b;
+  --lp-surface: rgba(30, 41, 59, 0.8);
+  --lp-surface-strong: #1e293b;
+  --lp-border: rgba(255, 255, 255, 0.08);
+  --lp-border-strong: rgba(255, 255, 255, 0.14);
+  --lp-text: #f1f5f9;
+  --lp-text-muted: #94a3b8;
+  --lp-text-soft: #64748b;
+  --lp-accent: #818cf8;
+  --lp-accent-deep: #a5b4fc;
+  --lp-accent-soft: rgba(129, 140, 248, 0.15);
+  --lp-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+  --lp-shadow-soft: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
 @keyframes lp-fade-in-up {
   to {
     opacity: 1;
@@ -562,7 +579,9 @@
 
 .lp-lang-pos {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 12px;
 }
 
 .lp-auth-card {

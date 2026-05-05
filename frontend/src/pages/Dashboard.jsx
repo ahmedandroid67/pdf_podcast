@@ -5,6 +5,7 @@ import { API_BASE, fetchJobs, changePassword } from '../api';
 import { useAuth } from '../context/AuthContext';
 import PodcastPipeline from '../components/PodcastPipeline';
 import LanguageSelector from '../components/LanguageSelector';
+import ThemeToggle from '../components/ThemeToggle';
 import './Dashboard.css';
 
 /* ── inline audio loader ── */
@@ -44,10 +45,10 @@ function getInitials(email = '') {
 
 /* ── plan styling map ── */
 const PLAN_STYLES = {
-  free:     { badgeBg: '#64748b',   cardBg: '#f8fafc', border: '#e2e8f0' },
-  basic:    { badgeBg: '#2563eb',   cardBg: '#eff6ff', border: '#bfdbfe' },
-  pro:      { badgeBg: 'linear-gradient(135deg,#6366f1,#818cf8)', cardBg: '#eef2ff', border: '#c7d2fe' },
-  business: { badgeBg: '#d97706',   cardBg: '#fffbeb', border: '#fde68a' },
+  free:     { badgeBg: 'var(--plan-free)',   cardBg: 'var(--surface-3)', border: 'var(--border)' },
+  basic:    { badgeBg: 'var(--plan-basic)',  cardBg: 'var(--surface-3)', border: 'var(--border)' },
+  pro:      { badgeBg: 'var(--plan-pro)',    cardBg: 'var(--surface-3)', border: 'var(--border)' },
+  business: { badgeBg: 'var(--plan-business)', cardBg: 'var(--surface-3)', border: 'var(--border)' },
 };
 
 export default function Dashboard() {
@@ -114,6 +115,7 @@ export default function Dashboard() {
           <span className="db-header-name">Pdf<em>Parser</em></span>
         </div>
         <div className="db-header-right">
+          <ThemeToggle />
           <LanguageSelector />
           {user?.is_admin && (
             <Link to="/admin" className="db-header-admin">🛡️ Admin</Link>

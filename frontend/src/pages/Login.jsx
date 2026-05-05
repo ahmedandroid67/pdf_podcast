@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../api';
 import LanguageSelector from '../components/LanguageSelector';
+import ThemeToggle from '../components/ThemeToggle';
 import './Login.css';
 
 const STATS = [
@@ -241,6 +242,7 @@ export default function Login() {
 
       <aside className="lp-auth-shell">
         <div className="lp-lang-pos">
+          <ThemeToggle />
           <LanguageSelector />
         </div>
 
