@@ -9,12 +9,17 @@ services:
       - backend
     expose:
       - "80"
-    labels:
-      - "coolify.managed=true"
-      - "coolify.service.type=compose"
-      # Tell Traefik exactly which port inside this container to forward traffic to.
-      # Without this, Traefik returns "no available server" even when the container is healthy.
-      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+    # Do NOT add manual Traefik labels here.
+    # Coolify auto-generates Traefik routing labels based on the
+    # "Domains for frontend" field in the Coolify UI.
+    # Manual labels CONFLICT with Coolify's auto-generated ones and cause
+    # "no available server" errors due to service name mismatches.
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     restart: always
 
   backend:
@@ -35,6 +40,12 @@ services:
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
     expose:
       - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     volumes:
       - audio_data:/app/static/audio
       - storage_data:/app/storage
