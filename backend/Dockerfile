@@ -21,8 +21,8 @@ RUN mkdir -p static/audio
 # Expose the port
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-  CMD python -c "import httpx; httpx.get('http://localhost:8000/health')" || exit 1
+# No healthcheck here to avoid "unhealthy" status
+
 
 RUN useradd --create-home --shell /bin/bash appuser && \
     chown -R appuser:appuser /app

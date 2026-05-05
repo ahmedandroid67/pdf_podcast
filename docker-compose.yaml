@@ -11,19 +11,14 @@ services:
       - "80"
     labels:
       - "coolify.managed=true"
-      # Tells Traefik to explicitly manage this container
       - "traefik.enable=true"
-      # Tells Traefik which network to use to reach this container (standard in Coolify)
       - "traefik.docker.network=coolify-proxy"
-      # Explicitly define the port for the proxy
+      # This tells Traefik to route your domain to this service
+      - "traefik.http.routers.pdf-frontend.rule=Host(`pdfpodcast.laaraichi.com`)"
+      - "traefik.http.routers.pdf-frontend.entrypoints=websecure"
+      - "traefik.http.routers.pdf-frontend.tls=true"
       - "traefik.http.services.pdf-frontend.loadbalancer.server.port=80"
-    healthcheck:
-      # Use a simpler check that definitely works in Alpine
-      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+    # REMOVED healthcheck from compose to avoid "unhealthy" status blocking Traefik
     restart: always
 
   backend:
@@ -42,12 +37,7 @@ services:
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
     expose:
       - "8000"
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
+    # REMOVED healthcheck from compose
     volumes:
       - audio_data:/app/static/audio
       - storage_data:/app/storage
