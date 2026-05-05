@@ -81,6 +81,7 @@ export default function Register() {
             fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
             fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-1)', letterSpacing: '-0.02em',
           }}>PdfPodcaster</span>
+        </div>
 
         <label style={{
           display: 'block', fontSize: '0.72rem', color: '#6b7280',
