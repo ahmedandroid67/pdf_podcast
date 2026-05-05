@@ -85,7 +85,10 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.getenv("SESSION_SECRET_KEY", os.getenv("JWT_SECRET_KEY", ""))
+    secret_key=os.getenv("SESSION_SECRET_KEY", os.getenv("JWT_SECRET_KEY", "temporary-secret-key-for-dev-only")),
+    session_cookie="pdfpodcaster_session",
+    max_age=3600,
+    same_site="lax",
 )
 
 Base.metadata.create_all(bind=engine)
