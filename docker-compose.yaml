@@ -7,21 +7,22 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - backend
-    # Expose port 80 to the Docker network so Coolify's reverse proxy can reach it.
     expose:
       - "80"
     labels:
       - "coolify.managed=true"
       - "coolify.service.type=compose"
+      # Tell Traefik exactly which port inside this container to forward traffic to.
+      # Without this, Traefik returns "no available server" even when the container is healthy.
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
     restart: always
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    # Do NOT use env_file here — Coolify injects environment variables directly.
-    # The .env file is excluded from the image (.dockerignore) and does not exist
-    # on the Coolify host, so env_file would cause the container to fail to start.
+    # Coolify injects environment variables directly from its UI panel.
+    # Do NOT use env_file — .env is gitignored and does not exist on the Coolify host.
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
@@ -32,7 +33,6 @@ services:
       - FRONTEND_URL=${FRONTEND_URL}
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-    # Expose port 8000 to the Docker internal network so the frontend nginx can proxy to it.
     expose:
       - "8000"
     volumes:
