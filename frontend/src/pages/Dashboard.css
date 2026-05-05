@@ -46,11 +46,11 @@
 }
 .db-header-logo {
   width: 34px; height: 34px;
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  background: linear-gradient(135deg, var(--brand), var(--brand-light));
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   font-size: 17px;
-  box-shadow: 0 3px 10px rgba(99,102,241,0.28);
+  box-shadow: var(--shadow-brand);
   flex-shrink: 0;
 }
 .db-header-name {
@@ -62,7 +62,7 @@
 }
 .db-header-name em {
   font-style: italic;
-  color: #6366f1;
+  color: var(--brand);
 }
 .db-header-right {
   display: flex;
@@ -72,16 +72,16 @@
 .db-header-admin {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px;
-  background: #fffbeb;
-  border: 1.5px solid #fde68a;
+  background: var(--surface-3);
+  border: 1.5px solid var(--border);
   border-radius: 8px;
-  color: #d97706;
+  color: var(--brand);
   font-size: 0.8rem;
   font-weight: 700;
   text-decoration: none;
-  transition: background 0.15s;
+  transition: all 0.15s;
 }
-.db-header-admin:hover { background: #fef3c7; }
+.db-header-admin:hover { background: var(--brand-soft); border-color: var(--brand); }
 .db-logout {
   height: 36px;
   padding: 0 16px;
@@ -99,7 +99,7 @@
 .db-logout:hover {
   border-color: #ef4444;
   color: #ef4444;
-  background: #fef2f2;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 /* ── body layout ── */
@@ -139,13 +139,13 @@
 .db-avatar {
   width: 52px; height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  background: linear-gradient(135deg, var(--brand), var(--brand-light));
   display: flex; align-items: center; justify-content: center;
   font-size: 1.3rem;
   font-weight: 800;
   color: white;
   margin-bottom: 14px;
-  box-shadow: 0 4px 14px rgba(99,102,241,0.3);
+  box-shadow: var(--shadow-brand);
   letter-spacing: -0.02em;
 }
 .db-user-email {
@@ -179,7 +179,7 @@
 
 .db-change-pw {
   background: none; border: none; padding: 0;
-  color: #6366f1; font-size: 0.75rem; font-weight: 600;
+  color: var(--brand); font-size: 0.75rem; font-weight: 600;
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   cursor: pointer; text-decoration: none;
   transition: opacity 0.15s;
@@ -228,7 +228,7 @@
 }
 .db-quota-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6366f1, #818cf8);
+  background: linear-gradient(90deg, var(--brand), var(--brand-light));
   border-radius: 99px;
   transition: width 0.5s ease;
 }
@@ -265,12 +265,12 @@
   text-decoration: none;
 }
 .db-nav-item:hover {
-  background: #f9fafb;
-  color: #111827;
+  background: var(--surface-3);
+  color: var(--text-1);
 }
 .db-nav-item-active {
-  background: #eef2ff;
-  color: #6366f1;
+  background: var(--brand-soft);
+  color: var(--brand);
 }
 .db-nav-icon {
   width: 28px; height: 28px;
@@ -287,8 +287,8 @@
 
 /* ── tip card ── */
 .db-tip-card {
-  background: linear-gradient(135deg, #eef2ff, #f5f3ff);
-  border: 1.5px solid #c7d2fe;
+  background: linear-gradient(135deg, var(--surface-3), var(--brand-soft));
+  border: 1.5px solid var(--border);
   border-radius: 14px;
   padding: 16px 18px;
   animation: db-fade-up 0.4s 0.1s ease both;
@@ -296,7 +296,7 @@
 .db-tip-title {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #4f46e5;
+  color: var(--brand);
   margin-bottom: 6px;
   display: flex;
   align-items: center;
@@ -304,7 +304,7 @@
 }
 .db-tip-text {
   font-size: 0.75rem;
-  color: #6366f1;
+  color: var(--text-2);
   line-height: 1.6;
   font-weight: 500;
   opacity: 0.85;
@@ -338,7 +338,7 @@
 }
 .db-section-icon {
   width: 28px; height: 28px;
-  background: #eef2ff;
+  background: var(--brand-soft);
   border-radius: 7px;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px;
@@ -438,10 +438,10 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-.db-status-completed { background: #dcfce7; color: #16a34a; }
-.db-status-failed    { background: #fee2e2; color: #dc2626; }
-.db-status-pending   { background: #f3f4f6; color: #6b7280; }
-.db-status-processing { background: #eff6ff; color: #2563eb; }
+.db-status-completed { background: rgba(22, 163, 74, 0.1); color: #16a34a; }
+.db-status-failed    { background: rgba(220, 38, 38, 0.1); color: #dc2626; }
+.db-status-pending   { background: var(--surface-3); color: var(--text-3); }
+.db-status-processing { background: var(--brand-soft); color: var(--brand); }
 
 .db-job-audio audio {
   height: 32px;
@@ -529,11 +529,11 @@
 }
 .db-modal-submit {
   width: 100%; height: 44px;
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  background: linear-gradient(135deg, var(--brand), var(--brand-deep));
   border: none; border-radius: 11px; color: white;
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   font-size: 0.9rem; font-weight: 700; cursor: pointer;
-  box-shadow: 0 4px 14px rgba(99,102,241,0.28);
+  box-shadow: var(--shadow-brand);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .db-modal-submit:hover:not(:disabled) {
