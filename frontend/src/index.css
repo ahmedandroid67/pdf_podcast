@@ -67,6 +67,21 @@ body {
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
+/* Global Autofill and Selection Fixes */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 50px var(--surface-2) inset !important;
+  -webkit-text-fill-color: var(--text-1) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+::selection {
+  background: var(--brand-light);
+  color: #fff;
+}
+
 .glass {
   background: var(--surface-2);
   opacity: 0.9;

@@ -21,8 +21,9 @@
 .dark {
   --lp-bg: #0f172a;
   --lp-bg-2: #1e293b;
-  --lp-surface: rgba(30, 41, 59, 0.8);
+  --lp-surface: rgba(30, 41, 59, 0.85);
   --lp-surface-strong: #1e293b;
+  --lp-input-bg: rgba(15, 23, 42, 0.6);
   --lp-border: rgba(255, 255, 255, 0.08);
   --lp-border-strong: rgba(255, 255, 255, 0.14);
   --lp-text: #f1f5f9;
@@ -33,6 +34,16 @@
   --lp-accent-soft: rgba(129, 140, 248, 0.15);
   --lp-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
   --lp-shadow-soft: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Fix browser autofill colors */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 50px var(--lp-surface-strong) inset !important;
+  -webkit-text-fill-color: var(--lp-text) !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 @keyframes lp-fade-in-up {
@@ -191,8 +202,8 @@
 .lp-hero-chip {
   padding: 11px 16px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.56);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-border);
   backdrop-filter: blur(14px);
   color: var(--lp-text-muted);
   font-size: 0.8rem;
@@ -257,9 +268,7 @@
 .lp-preview-card {
   padding: 28px;
   border-radius: 32px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(245, 248, 255, 0.78)),
-    rgba(255, 255, 255, 0.68);
+  background: var(--lp-surface);
 }
 
 .lp-preview-top {
@@ -300,8 +309,8 @@
 .lp-doc-card,
 .lp-wave-card,
 .lp-point {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.64);
+  background: var(--lp-surface-strong);
+  border: 1px solid var(--lp-border);
 }
 
 .lp-doc-card {
@@ -348,8 +357,8 @@
   min-width: 96px;
   padding: 14px 12px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(24, 38, 66, 0.08);
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-border);
   text-align: center;
 }
 
@@ -452,7 +461,7 @@
 .lp-quote-card {
   padding: 22px;
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.64);
+  background: var(--lp-surface);
 }
 
 .lp-stats-card {
@@ -464,8 +473,8 @@
 .lp-stat {
   padding: 16px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: var(--lp-surface-strong);
+  border: 1px solid var(--lp-border);
 }
 
 .lp-stat strong {
@@ -504,7 +513,7 @@
   border-radius: 18px;
   display: grid;
   place-items: center;
-  background: rgba(40, 87, 255, 0.12);
+  background: var(--lp-accent-soft);
   color: var(--lp-accent-deep);
   font-size: 0.88rem;
   font-weight: 800;
@@ -568,8 +577,8 @@
 .lp-auth-shell {
   min-height: 100vh;
   padding: 34px 28px 28px;
-  background: rgba(255, 255, 255, 0.45);
-  border-left: 1px solid rgba(255, 255, 255, 0.62);
+  background: var(--lp-bg);
+  border-left: 1px solid var(--lp-border);
   backdrop-filter: blur(20px);
   display: flex;
   flex-direction: column;
@@ -587,7 +596,7 @@
 .lp-auth-card {
   padding: 28px;
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.84);
+  background: var(--lp-surface-strong);
 }
 
 .lp-form-tag {
@@ -646,7 +655,7 @@
   gap: 10px;
   border-radius: 16px;
   border: 1px solid var(--lp-border-strong);
-  background: #fff;
+  background: var(--lp-surface-strong);
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--lp-text);
@@ -672,7 +681,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(24, 38, 66, 0.12);
+  background: var(--lp-border);
 }
 
 .lp-divider span {
@@ -705,7 +714,7 @@
   padding: 0 48px 0 16px;
   border-radius: 16px;
   border: 1px solid var(--lp-border);
-  background: rgba(248, 250, 255, 0.92);
+  background: var(--lp-bg);
   font-size: 0.95rem;
   color: var(--lp-text);
   outline: none;
@@ -713,9 +722,9 @@
 }
 
 .lp-input:focus {
-  border-color: rgba(40, 87, 255, 0.38);
-  background: #fff;
-  box-shadow: 0 0 0 4px rgba(40, 87, 255, 0.1);
+  border-color: var(--lp-accent);
+  background: var(--lp-surface-strong);
+  box-shadow: 0 0 0 4px var(--lp-accent-soft);
 }
 
 .lp-input::placeholder {
@@ -844,7 +853,7 @@
   justify-content: center;
   gap: 8px;
   flex-wrap: wrap;
-  border-top: 1px solid rgba(24, 38, 66, 0.08);
+  border-top: 1px solid var(--lp-border);
 }
 
 .lp-trust-item {
@@ -863,7 +872,7 @@
 .lp-plan-teaser {
   padding: 22px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--lp-surface);
 }
 
 .lp-plan-copy h3 {
@@ -880,8 +889,8 @@
 .lp-plan-pill {
   padding: 14px;
   border-radius: 18px;
-  background: rgba(248, 250, 255, 0.9);
-  border: 1px solid rgba(24, 38, 66, 0.08);
+  background: var(--lp-surface-strong);
+  border: 1px solid var(--lp-border);
 }
 
 .lp-plan-pill strong,
@@ -905,8 +914,8 @@
 }
 
 .lp-plan-pill-featured {
-  background: linear-gradient(135deg, rgba(40, 87, 255, 0.12), rgba(255, 255, 255, 0.94));
-  border-color: rgba(40, 87, 255, 0.22);
+  background: var(--lp-accent-soft);
+  border-color: var(--lp-accent);
 }
 
 @media (max-width: 1180px) {

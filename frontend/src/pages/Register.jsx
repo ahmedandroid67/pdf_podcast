@@ -84,7 +84,7 @@ export default function Register() {
         </div>
 
         <label style={{
-          display: 'block', fontSize: '0.72rem', color: '#6b7280',
+          display: 'block', fontSize: '0.72rem', color: 'var(--text-2)',
           marginBottom: '7px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em',
         }}>
           {t('email')}
@@ -100,7 +100,7 @@ export default function Register() {
         />
 
         <label style={{
-          display: 'block', fontSize: '0.72rem', color: '#6b7280',
+          display: 'block', fontSize: '0.72rem', color: 'var(--text-2)',
           marginBottom: '7px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em',
         }}>
           {t('password')}
@@ -155,9 +155,9 @@ export default function Register() {
           {loading ? t('loading') : t('register_action')}
         </button>
 
-        <p style={{ marginTop: '16px', fontSize: '0.82rem', color: '#9ca3af', textAlign: 'center', fontWeight: 500 }}>
+        <p style={{ marginTop: '16px', fontSize: '0.82rem', color: 'var(--text-3)', textAlign: 'center', fontWeight: 500 }}>
           {t('have_account')}{' '}
-          <Link to="/login" style={{ color: '#6366f1', fontWeight: 700, textDecoration: 'none' }}>
+          <Link to="/login" style={{ color: 'var(--brand)', fontWeight: 700, textDecoration: 'none' }}>
             {t('login_action')}
           </Link>
         </p>
