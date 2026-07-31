@@ -28,16 +28,19 @@ def _make_pdf_bytes(text: str) -> bytes:
 class TestExtractTextFromBytes:
     def test_extracts_text_from_valid_pdf(self):
         pdf = _make_pdf_bytes("Hello, world!")
-        result = extract_text_from_bytes(pdf)
-        assert "Hello" in result
+        text, page_count, is_scanned = extract_text_from_bytes(pdf)
+        assert "Hello" in text
+        assert page_count == 1
+        assert is_scanned is False
 
     def test_returns_empty_for_blank_page(self):
         doc = pymupdf.open()
         doc.new_page()
         buf = io.BytesIO()
         doc.save(buf)
-        result = extract_text_from_bytes(buf.getvalue())
-        assert result.strip() == ""
+        text, page_count, is_scanned = extract_text_from_bytes(buf.getvalue())
+        assert text.strip() == ""
+        assert page_count == 1
 
     def test_multipage_pdf(self):
         doc = pymupdf.open()
@@ -46,10 +49,15 @@ class TestExtractTextFromBytes:
             page.insert_text((50, 100), f"Page {i + 1}")
         buf = io.BytesIO()
         doc.save(buf)
-        result = extract_text_from_bytes(buf.getvalue())
-        assert "Page 1" in result
-        assert "Page 3" in result
+        text, page_count, is_scanned = extract_text_from_bytes(buf.getvalue())
+        assert "Page 1" in text
+        assert "Page 3" in text
+        assert page_count == 3
 
-    def test_raises_on_invalid_bytes(self):
-        with pytest.raises(Exception):
-            extract_text_from_bytes(b"not a pdf")
+    def test_invalid_bytes_returns_empty_result(self):
+        # extract_text_from_bytes deliberately swallows PyMuPDF errors and
+        # returns an empty result rather than raising, so callers can treat
+        # "no text" uniformly regardless of cause.
+        text, page_count, is_scanned = extract_text_from_bytes(b"not a pdf")
+        assert text == ""
+        assert page_count == 0

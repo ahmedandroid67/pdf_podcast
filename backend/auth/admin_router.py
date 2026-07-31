@@ -161,7 +161,10 @@ def admin_create_user(
     user = create_user(db, payload.email, payload.password)
     # Apply extra fields
     if payload.plan:
-        user.plan = PlanType(payload.plan)
+        try:
+            user.plan = PlanType(payload.plan)
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"Invalid plan: {payload.plan!r}")
     user.daily_quota = payload.daily_quota
     user.is_admin = payload.is_admin
     db.add(user)
@@ -187,7 +190,10 @@ def admin_update_user(
         user.email = payload.email
 
     if payload.plan is not None:
-        user.plan = PlanType(payload.plan)
+        try:
+            user.plan = PlanType(payload.plan)
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"Invalid plan: {payload.plan!r}")
     if payload.daily_quota is not None:
         user.daily_quota = payload.daily_quota
     if payload.is_admin is not None:
@@ -201,9 +207,11 @@ def admin_update_user(
 @router.put("/users/{user_id}/status", response_model=AdminUserRead)
 def admin_toggle_status(
     user_id: str,
-    _admin=Depends(require_admin),
+    admin=Depends(require_admin),
     db: Session = Depends(get_db),
 ):
+    if str(admin.id) == user_id:
+        raise HTTPException(status_code=400, detail="You cannot deactivate your own account.")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
@@ -216,20 +224,32 @@ def admin_toggle_status(
 
 @router.delete("/users/bulk/old", status_code=status.HTTP_200_OK)
 def admin_bulk_delete_old_users(
+    confirm: bool = False,
     _admin=Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    """Delete all non-admin users created more than 60 days ago."""
+    """Delete all non-admin users created more than 60 days ago.
+
+    Requires ?confirm=true — this is a destructive, irreversible bulk delete
+    that does not distinguish inactive accounts from active paying customers.
+    """
+    if not confirm:
+        raise HTTPException(
+            status_code=400,
+            detail="This permanently deletes all non-admin accounts older than 60 days. "
+                   "Pass ?confirm=true to proceed.",
+        )
+
     threshold = datetime.utcnow() - timedelta(days=60)
     old_users = db.query(User).filter(
         User.created_at < threshold,
         User.is_admin == False
     ).all()
-    
+
     count = len(old_users)
     for u in old_users:
         db.delete(u)
-    
+
     db.commit()
     return {"message": f"Successfully deleted {count} old user accounts."}
 
@@ -237,9 +257,11 @@ def admin_bulk_delete_old_users(
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def admin_delete_user(
     user_id: str,
-    _admin=Depends(require_admin),
+    admin=Depends(require_admin),
     db: Session = Depends(get_db),
 ):
+    if str(admin.id) == user_id:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account.")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")

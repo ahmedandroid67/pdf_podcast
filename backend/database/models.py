@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.types import TypeDecorator, CHAR
 
@@ -75,9 +75,15 @@ class JobStatus(str, enum.Enum):
 
 class PodcastJob(Base):
     __tablename__ = "podcast_jobs"
+    __table_args__ = (
+        # Speeds up get_jobs_for_user's ORDER BY created_at and the retention
+        # cleanup's per-user "older than cutoff" scan.
+        Index("ix_podcast_jobs_user_id_created_at", "user_id", "created_at"),
+        Index("ix_podcast_jobs_status", "status"),
+    )
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID(), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     pdf_name = Column(String(255), nullable=False)
     pdf_size = Column(Integer, nullable=False)
     summary_mode = Column(String(32), default="podcast", nullable=False)

@@ -25,11 +25,14 @@ LANG_MAP = {
 }
 
 
-async def generate_podcast_script(summary: str, lang: str = "en", mode: str = "podcast") -> str:
-    """Generate a podcast narration script, a dialogue script, or return cleaned text for audiobook."""
+async def generate_podcast_script(summary: str, lang: str = "en", mode: str = "podcast") -> tuple[str, int]:
+    """Generate a podcast narration script, a dialogue script, or return cleaned text for audiobook.
+
+    Returns (script, tokens_used).
+    """
 
     if mode == "audiobook":
-        return summary
+        return summary, 0
 
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
@@ -83,7 +86,8 @@ GUIDELINES:
     try:
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(None, lambda: model.generate_content(prompt))
-        return response.text
+        tokens = getattr(getattr(response, "usage_metadata", None), "total_token_count", 0) or 0
+        return response.text, tokens
     except Exception as e:
         logger.error(f"Gemini Script Generation failed: {e}")
         raise

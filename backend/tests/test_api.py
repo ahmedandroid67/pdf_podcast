@@ -1,25 +1,18 @@
 """
 tests/test_api.py
-Integration tests for FastAPI endpoints (no LLM calls — all AI calls are mocked).
+Integration tests for the current FastAPI surface (no LLM calls — all AI
+calls are mocked). Exercises the real /api/process/* pipeline, not the old
+/api/upload+/api/summarize+/api/podcast endpoints, which have been removed.
 """
 
 import io
-import os
-import sys
-import pytest
-import pymupdf
-from unittest.mock import AsyncMock, patch, MagicMock
+import uuid
 from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+import pymupdf
 
-from fastapi.testclient import TestClient
-
-os.environ.setdefault("OPENAI_API_KEY", "test-key")
-
-from main import app
-
-client = TestClient(app)
+from services.pdf_service import PipelineResult
 
 
 def _make_pdf_bytes(text: str = "Test document content.") -> bytes:
@@ -32,74 +25,151 @@ def _make_pdf_bytes(text: str = "Test document content.") -> bytes:
 
 
 class TestHealthEndpoint:
-    def test_health_returns_ok(self):
+    def test_health_returns_ok(self, client):
         resp = client.get("/health")
         assert resp.status_code == 200
         assert resp.json()["status"] == "ok"
 
 
-class TestUploadEndpoint:
-    def test_upload_valid_pdf(self):
-        pdf_bytes = _make_pdf_bytes("Hello from a PDF")
-        resp = client.post(
-            "/api/upload",
-            files={"file": ("test.pdf", io.BytesIO(pdf_bytes), "application/pdf")},
-        )
+class TestAuthFlow:
+    def test_register_login_me(self, client):
+        email = f"flow-{uuid.uuid4().hex[:8]}@example.com"
+        resp = client.post("/auth/register", json={"email": email, "password": "TestPassword123!"})
+        assert resp.status_code == 201
+
+        resp = client.post("/auth/login", json={"email": email, "password": "TestPassword123!"})
         assert resp.status_code == 200
-        assert "Hello" in resp.json()["text"]
+        token = resp.json()["access_token"]
 
-    def test_upload_empty_file_returns_400(self):
-        resp = client.post(
-            "/api/upload",
-            files={"file": ("empty.pdf", io.BytesIO(b""), "application/pdf")},
-        )
-        assert resp.status_code == 400
-
-    def test_upload_non_pdf_allowed_by_content_type(self):
-        pdf_bytes = _make_pdf_bytes("Content here")
-        # Valid PDF bytes with .pdf extension should always work
-        resp = client.post(
-            "/api/upload",
-            files={"file": ("doc.pdf", io.BytesIO(pdf_bytes), "application/pdf")},
-        )
-        assert resp.status_code == 200
-
-
-class TestSummarizeEndpoint:
-    def test_summarize_calls_openai(self):
-        with patch("main.summarize_text", new_callable=AsyncMock) as mock_sum:
-            mock_sum.return_value = "This is a mock summary."
-            resp = client.post("/api/summarize", json={"text": "Some long text to summarize."})
-        assert resp.status_code == 200
-        assert resp.json()["summary"] == "This is a mock summary."
-
-    def test_summarize_empty_text_returns_400(self):
-        resp = client.post("/api/summarize", json={"text": "   "})
-        assert resp.status_code == 400
-
-
-class TestPodcastEndpoint:
-    def test_podcast_endpoint(self, tmp_path, monkeypatch):
-        # Create a fake audio file
-        fake_audio = tmp_path / "podcast_abc12345.mp3"
-        fake_audio.write_bytes(b"\xFF\xFB" * 100)
-
-        monkeypatch.setattr("main.AUDIO_DIR", tmp_path)
-
-        with (
-            patch("main.generate_podcast_script", new_callable=AsyncMock) as mock_script,
-            patch("main.generate_audio", new_callable=AsyncMock) as mock_audio,
-        ):
-            mock_script.return_value = "Welcome to the podcast!"
-            mock_audio.return_value = fake_audio
-
-            resp = client.post("/api/podcast", json={"summary": "A great summary."})
-
+        resp = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["script"] == "Welcome to the podcast!"
-        assert "podcast_abc12345.mp3" in data["audio_url"]
+        assert data["email"] == email
+        # New free-plan user should see the *plan's* daily limit, not a stale column.
+        assert data["daily_quota"] == 1
 
-    def test_podcast_empty_summary_returns_400(self):
-        resp = client.post("/api/podcast", json={"summary": ""})
+    def test_duplicate_registration_rejected(self, client):
+        email = f"dup-{uuid.uuid4().hex[:8]}@example.com"
+        client.post("/auth/register", json={"email": email, "password": "TestPassword123!"})
+        resp = client.post("/auth/register", json={"email": email, "password": "TestPassword123!"})
         assert resp.status_code == 400
+
+    def test_login_wrong_password_rejected(self, client):
+        email = f"wrong-{uuid.uuid4().hex[:8]}@example.com"
+        client.post("/auth/register", json={"email": email, "password": "TestPassword123!"})
+        resp = client.post("/auth/login", json={"email": email, "password": "WrongPassword!"})
+        assert resp.status_code == 401
+
+
+class TestProcessUploadEndpoint:
+    def test_requires_auth(self, client):
+        pdf_bytes = _make_pdf_bytes()
+        resp = client.post(
+            "/api/process/upload",
+            files={"file": ("test.pdf", io.BytesIO(pdf_bytes), "application/pdf")},
+        )
+        assert resp.status_code == 401
+
+    def test_rejects_non_pdf(self, client, auth_headers):
+        resp = client.post(
+            "/api/process/upload",
+            files={"file": ("test.txt", io.BytesIO(b"not a pdf"), "text/plain")},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 400
+
+    def test_rejects_empty_file(self, client, auth_headers):
+        # mode="audiobook" bypasses the free-plan can_generate_podcast gate so
+        # this test actually exercises the empty-file validation, not the
+        # (separately tested) plan-gating logic.
+        resp = client.post(
+            "/api/process/upload",
+            files={"file": ("empty.pdf", io.BytesIO(b""), "application/pdf")},
+            data={"mode": "audiobook"},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 422
+
+    def test_free_plan_cannot_generate_podcast(self, client, auth_headers):
+        pdf_bytes = _make_pdf_bytes("Hello from a PDF")
+        resp = client.post(
+            "/api/process/upload",
+            files={"file": ("test.pdf", io.BytesIO(pdf_bytes), "application/pdf")},
+            data={"mode": "podcast"},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 403
+
+    def test_full_pipeline_success(self, client, auth_headers, tmp_path, monkeypatch):
+        monkeypatch.setattr("jobs.job_router.STORAGE_ROOT", tmp_path)
+
+        pdf_bytes = _make_pdf_bytes("Hello from a PDF")
+        fake_audio = tmp_path / "generated.mp3"
+        fake_audio.write_bytes(b"\xff\xfb" * 10)
+
+        fake_result = PipelineResult(
+            text="Hello from a PDF",
+            summary="A short summary.",
+            script="Welcome to the podcast!",
+            audio_path=fake_audio,
+            page_count=1,
+            tokens_used=42,
+        )
+
+        with patch("jobs.job_router.run_full_pipeline", new_callable=AsyncMock) as mock_pipeline:
+            mock_pipeline.return_value = fake_result
+            resp = client.post(
+                "/api/process/upload",
+                files={"file": ("test.pdf", io.BytesIO(pdf_bytes), "application/pdf")},
+                data={"lang": "en", "mode": "audiobook"},
+                headers=auth_headers,
+            )
+
+        assert resp.status_code == 200
+        job_id = resp.json()["job_id"]
+
+        result_resp = client.get(f"/api/jobs/{job_id}/result", headers=auth_headers)
+        assert result_resp.status_code == 200
+        data = result_resp.json()
+        assert data["summary"] == "A short summary."
+        assert data["script"] == "Welcome to the podcast!"
+
+        jobs_resp = client.get("/api/jobs", headers=auth_headers)
+        assert jobs_resp.status_code == 200
+        jobs = jobs_resp.json()
+        assert any(j["id"] == job_id for j in jobs)
+        completed = next(j for j in jobs if j["id"] == job_id)
+        assert completed["has_audio"] is True
+        assert "audio_path" not in completed  # server filesystem path must not leak
+
+
+class TestJobLookup:
+    def test_unknown_job_returns_404(self, client, auth_headers):
+        resp = client.get(f"/api/jobs/{uuid.uuid4()}/result", headers=auth_headers)
+        assert resp.status_code == 404
+
+    def test_invalid_job_id_returns_422(self, client, auth_headers):
+        resp = client.get("/api/jobs/not-a-uuid/result", headers=auth_headers)
+        assert resp.status_code == 422
+
+
+class TestProcessUrlSsrfProtection:
+    def test_rejects_private_ip(self, client, auth_headers):
+        resp = client.post(
+            "/api/process/url",
+            json={"url": "http://127.0.0.1/document.pdf", "mode": "audiobook"},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 400
+
+    def test_rejects_non_http_scheme(self, client, auth_headers):
+        resp = client.post(
+            "/api/process/url",
+            json={"url": "file:///etc/passwd", "mode": "audiobook"},
+            headers=auth_headers,
+        )
+        assert resp.status_code == 400
+
+    def test_requires_auth(self, client):
+        resp = client.post("/api/process/url", json={"url": "https://example.com/a.pdf"})
+        assert resp.status_code == 401

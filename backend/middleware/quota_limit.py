@@ -56,12 +56,22 @@ def check_user_quota(
             detail=msg,
         )
 
+    # Reserve the daily document slot now, still inside the FOR UPDATE lock,
+    # so concurrent requests can't all pass the check above before any of
+    # them commits (the job itself may still fail later; we don't refund).
+    user.used_today += 1
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
     return user
 
 
 def increment_usage(user, db: Session, tokens: int = 0):
-    """Increments doc count and token usage (daily, monthly, total)."""
-    user.used_today += 1
+    """Records token usage (daily, monthly, total) for a completed job.
+
+    Document-count quota is reserved up front by check_user_quota.
+    """
     user.tokens_used_today += tokens
     user.tokens_used_month += tokens
     user.total_tokens_used += tokens

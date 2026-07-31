@@ -46,8 +46,8 @@ LANG_MAP = {
 }
 
 
-async def summarize_text(text: str, lang: str = "en", mode: str = "podcast") -> str:
-    """Summarize or clean text using Google Gemini."""
+async def summarize_text(text: str, lang: str = "en", mode: str = "podcast") -> tuple[str, int]:
+    """Summarize or clean text using Google Gemini. Returns (summary, tokens_used)."""
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not found in environment")
@@ -87,7 +87,8 @@ TEXT TO SUMMARIZE:
     try:
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(None, lambda: model.generate_content(prompt))
-        return response.text
+        tokens = getattr(getattr(response, "usage_metadata", None), "total_token_count", 0) or 0
+        return response.text, tokens
     except Exception as e:
         logger.error(f"Gemini Summarization failed: {e}")
         raise

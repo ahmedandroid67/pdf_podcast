@@ -1,10 +1,11 @@
-import asyncio
 from pathlib import Path
+from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile, Request
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
-import httpx
 
 from auth.auth_dependencies import get_current_user
 from database.database import get_db, SessionLocal
@@ -23,12 +24,18 @@ from services.audio_service import store_audio_file
 from services.pdf_service import run_full_pipeline
 from utils.file_validation import PdfValidationError, validate_pdf_bytes
 from utils.plan_utils import (
-    can_upload_pdf,
     can_generate_podcast,
     can_store_more_jobs,
     get_user_plan_limits,
 )
+from utils.safe_fetch import UnsafeUrlError, fetch_url_safely
 from middleware.rate_limit import limiter
+
+
+class ProcessUrlRequest(BaseModel):
+    url: str
+    lang: str = "en"
+    mode: str = "podcast"
 
 router = APIRouter(prefix="/api", tags=["jobs"])
 
@@ -66,24 +73,21 @@ async def _run_pipeline_bg(
             set_step(job_id, step)
 
         try:
-            text, summary, script, audio_path, tokens_used_summarizer, tokens_used_podcast = \
-                await run_full_pipeline(pdf_bytes, lang, mode, on_step=on_step)
+            result = await run_full_pipeline(pdf_bytes, lang, mode, on_step=on_step)
 
-            total_tokens = (tokens_used_summarizer or 0) + (tokens_used_podcast or 0)
-            stored_audio = store_audio_file(audio_path, storage_dir)
+            stored_audio = store_audio_file(result.audio_path, storage_dir)
             job = update_job_completed(db, job, stored_audio)
-            job.tokens_used = total_tokens
+            job.tokens_used = result.tokens_used
             db.add(job)
 
-            from middleware.quota_limit import increment_usage
             user = db.query(User).filter(User.id == user_id).first()
             if user:
-                increment_usage(user, db, total_tokens)
+                increment_usage(user, db, result.tokens_used)
 
             set_result(job_id, {
-                "text": text,
-                "summary": summary,
-                "script": script,
+                "text": result.text,
+                "summary": result.summary,
+                "script": result.script,
                 "audio_url": f"/api/audio/{job_id}",
                 "job_id": job_id,
             })
@@ -110,11 +114,11 @@ def list_jobs(
 
 @router.get("/jobs/{job_id}", response_model=JobRead)
 def get_job(
-    job_id: str,
+    job_id: UUID,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    job = get_job_for_user(db, str(current_user.id), job_id)
+    job = get_job_for_user(db, str(current_user.id), str(job_id))
     if not job:
         raise HTTPException(status_code=404, detail="Job not found.")
     return job
@@ -122,11 +126,12 @@ def get_job(
 
 @router.get("/jobs/{job_id}/progress")
 def get_job_progress(
-    job_id: str,
+    job_id: UUID,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Returns the current pipeline step for a running job."""
+    job_id = str(job_id)
     job = get_job_for_user(db, str(current_user.id), job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found.")
@@ -136,11 +141,12 @@ def get_job_progress(
 
 @router.get("/jobs/{job_id}/result")
 def get_job_result(
-    job_id: str,
+    job_id: UUID,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Returns text/summary/script/audio_url once the job is completed."""
+    job_id = str(job_id)
     job = get_job_for_user(db, str(current_user.id), job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found.")
@@ -149,7 +155,9 @@ def get_job_result(
     if job.status == "failed":
         result = get_result(job_id)
         error = result.get("error", "Processing failed.") if result else "Processing failed."
-        raise HTTPException(status_code=500, detail=error)
+        # 422: the job failed for a reason the client can act on/display,
+        # not a 500 (which would imply an unhandled server bug).
+        raise HTTPException(status_code=422, detail=error)
     result = get_result(job_id)
     if not result:
         raise HTTPException(status_code=404, detail="Result not available. It may have expired — reload the page.")
@@ -224,15 +232,13 @@ async def process_upload(
 async def process_url(
     request: Request,
     background_tasks: BackgroundTasks,
-    body: dict,
+    body: ProcessUrlRequest,
     current_user=Depends(check_user_quota),
     db: Session = Depends(get_db),
 ):
-    url = body.get("url")
-    lang = body.get("lang", "en")
-    mode = body.get("mode", "podcast")
-    if not url:
-        raise HTTPException(status_code=400, detail="Missing URL.")
+    url = body.url
+    lang = body.lang
+    mode = body.mode
 
     if mode in ("podcast", "dialogue"):
         ok, err = can_generate_podcast(current_user)
@@ -243,9 +249,15 @@ async def process_url(
     if not ok:
         raise HTTPException(status_code=403, detail=err)
 
-    async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client:
-        response = await client.get(url)
-        response.raise_for_status()
+    limits = get_user_plan_limits(current_user)
+    max_bytes = limits.max_size_mb * 1024 * 1024
+
+    try:
+        response = await fetch_url_safely(url, max_bytes=max_bytes)
+    except UnsafeUrlError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=422, detail=f"Could not fetch URL: {exc}") from exc
 
     content_type = response.headers.get("content-type", "")
     if "pdf" not in content_type and not url.lower().endswith(".pdf"):
@@ -253,7 +265,6 @@ async def process_url(
 
     pdf_bytes = response.content
 
-    limits = get_user_plan_limits(current_user)
     try:
         validate_pdf_bytes(
             pdf_bytes,
@@ -291,11 +302,11 @@ async def process_url(
 
 @router.get("/audio/{job_id}")
 def get_audio(
-    job_id: str,
+    job_id: UUID,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    job = get_job_for_user(db, str(current_user.id), job_id)
+    job = get_job_for_user(db, str(current_user.id), str(job_id))
     if not job or not job.audio_path:
         raise HTTPException(status_code=404, detail="Audio not found.")
     audio_path = Path(job.audio_path)

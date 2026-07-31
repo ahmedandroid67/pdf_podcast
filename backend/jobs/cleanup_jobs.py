@@ -1,12 +1,16 @@
 import logging
+import shutil
 from datetime import datetime, timedelta
+from pathlib import Path
+
 from sqlalchemy.orm import Session
+
 from database.models import User, PodcastJob
 from plans import PLANS, PlanType
-import os
-import shutil
 
 logger = logging.getLogger(__name__)
+
+STORAGE_ROOT = Path(__file__).resolve().parent.parent / "storage"
 
 def cleanup_expired_jobs(db: Session):
     """
@@ -38,26 +42,13 @@ def cleanup_expired_jobs(db: Session):
         
         for job in expired_jobs:
             try:
-                # 4. Delete audio files from storage
-                if job.audio_path:
-                    # audio_path is usually relative or absolute
-                    # If it's a directory (as in main.py storage logic), remove it
-                    # main.py: storage_dir = Path(__file__).resolve().parent / "storage" / str(user.id) / str(job.id)
-                    # For simplicity, we assume we need to clean up the directory
-                    # But if audio_path is stored, we use that.
-                    
-                    # Ensure we have a valid path
-                    if os.path.exists(job.audio_path):
-                        if os.path.isfile(job.audio_path):
-                            os.remove(job.audio_path)
-                            # Also try to remove parent dir if empty
-                            parent_dir = os.path.dirname(job.audio_path)
-                            if parent_dir and os.path.exists(parent_dir) and not os.listdir(parent_dir):
-                                os.rmdir(parent_dir)
-                        elif os.path.isdir(job.audio_path):
-                            shutil.rmtree(job.audio_path)
-                
-                # 5. Delete from DB
+                # Delete the whole job storage directory — this removes both the
+                # generated audio.mp3 AND the retained input.pdf, which the old
+                # audio_path-only cleanup left behind forever.
+                job_dir = STORAGE_ROOT / str(job.user_id) / str(job.id)
+                if job_dir.exists():
+                    shutil.rmtree(job_dir, ignore_errors=True)
+
                 db.delete(job)
                 deleted_count += 1
             except Exception as e:

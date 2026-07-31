@@ -9,7 +9,10 @@ from utils.security import create_access_token
 from middleware.rate_limit import limiter
 from authlib.integrations.starlette_client import OAuth
 from starlette.responses import RedirectResponse
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -48,7 +51,7 @@ async def google_login(request: Request):
         raise HTTPException(status_code=503, detail="Google OAuth is not configured.")
 
     redirect_uri = _google_redirect_uri(request)
-    print(f"DEBUG: Redirecting to Google with redirect_uri={redirect_uri}")
+    logger.debug("Redirecting to Google with redirect_uri=%s", redirect_uri)
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @router.get("/callback/google")

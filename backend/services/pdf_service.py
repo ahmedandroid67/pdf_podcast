@@ -1,8 +1,21 @@
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Optional
+
 from audio_generator import generate_audio
 from pdf_parser import extract_text_from_bytes
 from podcast_generator import generate_podcast_script
 from summarizer import summarize_text
-from typing import Callable, Optional
+
+
+@dataclass
+class PipelineResult:
+    text: str
+    summary: str
+    script: str
+    audio_path: Path
+    page_count: int
+    tokens_used: int
 
 
 async def run_full_pipeline(
@@ -10,7 +23,7 @@ async def run_full_pipeline(
     lang: str = "en",
     mode: str = "podcast",
     on_step: Optional[Callable[[str], None]] = None,
-):
+) -> PipelineResult:
     if on_step:
         on_step("extracting")
     text, page_count, is_scanned = extract_text_from_bytes(pdf_bytes)
@@ -22,14 +35,21 @@ async def run_full_pipeline(
 
     if on_step:
         on_step("summarizing")
-    summary = await summarize_text(text, lang, mode)
+    summary, summary_tokens = await summarize_text(text, lang, mode)
 
     if on_step:
         on_step("scripting")
-    script = await generate_podcast_script(summary, lang, mode)
+    script, script_tokens = await generate_podcast_script(summary, lang, mode)
 
     if on_step:
         on_step("audio")
     audio_path = await generate_audio(script, lang, mode)
 
-    return text, summary, script, audio_path, page_count, is_scanned
+    return PipelineResult(
+        text=text,
+        summary=summary,
+        script=script,
+        audio_path=audio_path,
+        page_count=page_count,
+        tokens_used=summary_tokens + script_tokens,
+    )

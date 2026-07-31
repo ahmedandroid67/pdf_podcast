@@ -29,4 +29,7 @@ RUN useradd --create-home --shell /bin/bash appuser && \
 
 USER appuser
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Apply pending Alembic migrations, then start the app. On an existing
+# deployment whose DB predates Alembic, run `alembic stamp 0001_initial_schema`
+# once (see migrations/versions/0001_initial_schema.py) before deploying this.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"]
