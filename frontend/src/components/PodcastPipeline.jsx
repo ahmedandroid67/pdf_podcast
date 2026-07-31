@@ -80,10 +80,30 @@ export default function PodcastPipeline({ onJobCreated, embedded = false }) {
     return map[key] || t('status_extracting');
   };
 
+  const POLL_INTERVAL_MS = 2500;
+  const MAX_POLL_ATTEMPTS = 240; // ~10 minutes
+
+  const failPolling = (message) => {
+    stopPolling();
+    setError(message);
+    setStatus(STATUS.ERROR);
+    setStep(STEP.UPLOAD);
+  };
+
   const startPolling = (jobId) => {
+    let attempts = 0;
+    let consecutiveErrors = 0;
+
     pollingRef.current = setInterval(async () => {
+      attempts += 1;
+      if (attempts > MAX_POLL_ATTEMPTS) {
+        failPolling(t('error_timed_out', 'This is taking longer than expected. Please try again.'));
+        return;
+      }
+
       try {
         const prog = await fetchJobProgress(jobId);
+        consecutiveErrors = 0;
         const pStep = STEP_MAP[prog.step] ?? STEP.EXTRACT;
         setStep(pStep);
         setProgressLabel(stepLabelFromKey(prog.step));
@@ -103,21 +123,30 @@ export default function PodcastPipeline({ onJobCreated, embedded = false }) {
             setStatus(STATUS.DONE);
             if (onJobCreated) onJobCreated(jobId);
           } catch (e) {
-            setError(e.message);
-            setStatus(STATUS.ERROR);
-            setStep(STEP.UPLOAD);
+            failPolling(e.message);
           }
         } else if (isFailed) {
-          stopPolling();
-          const result = await fetchJobResult(jobId).catch(() => null);
-          setError(result?.error || t('error_processing_file', 'Processing failed.'));
-          setStatus(STATUS.ERROR);
-          setStep(STEP.UPLOAD);
+          // The failed-job response body carries the real reason (e.g. "scanned
+          // PDF", "Gemini quota exceeded") as its error detail — surface it.
+          try {
+            await fetchJobResult(jobId);
+            failPolling(t('error_processing_file', 'Processing failed.'));
+          } catch (e) {
+            failPolling(e.message || t('error_processing_file', 'Processing failed.'));
+          }
         }
-      } catch {
-        /* ignore transient network errors */
+      } catch (e) {
+        if (e.status === 401 || e.status === 403) {
+          failPolling(t('error_session_expired', 'Your session expired. Please log in again.'));
+          return;
+        }
+        consecutiveErrors += 1;
+        if (consecutiveErrors >= 5) {
+          failPolling(e.message || t('error_processing_file', 'Processing failed.'));
+        }
+        // otherwise treat as a transient network blip and keep polling
       }
-    }, 2500);
+    }, POLL_INTERVAL_MS);
   };
 
   useEffect(() => () => stopPolling(), []);

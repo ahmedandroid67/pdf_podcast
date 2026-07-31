@@ -27,55 +27,11 @@ async function handleResponse(res) {
         errorMessage = JSON.stringify(body.detail);
       }
     }
-    throw new Error(errorMessage);
+    const err = new Error(errorMessage);
+    err.status = res.status;
+    throw err;
   }
   return res.json();
-}
-
-/** Upload a PDF File object → { text } */
-export async function uploadPdf(file, { signal } = {}) {
-  const form = new FormData();
-  form.append('file', file);
-  const res = await fetch(`${BASE}/upload`, {
-    method: 'POST',
-    headers: authHeaders(),
-    body: form,
-    signal,
-  });
-  return handleResponse(res);
-}
-
-/** Fetch PDF from URL → { text } */
-export async function fetchPdfUrl(url, { signal } = {}) {
-  const res = await fetch(`${BASE}/url`, {
-    method: 'POST',
-    headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ url }),
-    signal,
-  });
-  return handleResponse(res);
-}
-
-/** Summarize extracted text → { summary } */
-export async function summarizeText(text, lang = 'en', mode = 'podcast', { signal } = {}) {
-  const res = await fetch(`${BASE}/summarize`, {
-    method: 'POST',
-    headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ text, lang, mode }),
-    signal,
-  });
-  return handleResponse(res);
-}
-
-/** Generate podcast script + audio from summary → { script, audio_url } */
-export async function generatePodcast(summary, lang = 'en', mode = 'podcast', { signal } = {}) {
-  const res = await fetch(`${BASE}/podcast`, {
-    method: 'POST',
-    headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ summary, lang, mode }),
-    signal,
-  });
-  return handleResponse(res);
 }
 
 /** Start full pipeline (upload) → { job_id, status } */
@@ -219,7 +175,7 @@ export async function adminResetPassword(userId, password, { signal } = {}) {
 }
 
 export async function adminBulkDeleteOldUsers({ signal } = {}) {
-  const res = await fetch(`${API_BASE}/api/admin/users/bulk/old`, {
+  const res = await fetch(`${API_BASE}/api/admin/users/bulk/old?confirm=true`, {
     method: 'DELETE',
     headers: authHeaders(),
     signal,

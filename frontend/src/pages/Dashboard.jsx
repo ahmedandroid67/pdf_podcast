@@ -8,31 +8,43 @@ import LanguageSelector from '../components/LanguageSelector';
 import ThemeToggle from '../components/ThemeToggle';
 import './Dashboard.css';
 
-/* ── inline audio loader ── */
+/* ── inline audio loader (fetches only when the user asks to play) ── */
 function JobAudio({ jobId }) {
   const [audioUrl, setAudioUrl] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    let active = true;
-    let objectUrl = '';
-    const load = async () => {
+    let objectUrl = audioUrl;
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId]);
+
+  const load = async () => {
+    setLoading(true);
+    try {
       const token = localStorage.getItem('auth_token');
       const res = await fetch(`${API_BASE}/api/audio/${jobId}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) return;
       const blob = await res.blob();
-      objectUrl = URL.createObjectURL(blob);
-      if (active) setAudioUrl(objectUrl);
-    };
-    load();
-    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [jobId]);
+      setAudioUrl(URL.createObjectURL(blob));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (!audioUrl) return null;
+  if (!audioUrl) {
+    return (
+      <button className="db-job-audio-load" onClick={load} disabled={loading}>
+        {loading ? '…' : '▶'}
+      </button>
+    );
+  }
+
   return (
     <div className="db-job-audio">
-      <audio controls src={audioUrl} />
+      <audio controls autoPlay src={audioUrl} />
     </div>
   );
 }
@@ -275,7 +287,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                       </div>
-                      {job.audio_path && <JobAudio jobId={job.id} />}
+                      {job.has_audio && <JobAudio jobId={job.id} />}
                     </div>
                   );
                 })

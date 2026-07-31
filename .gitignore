@@ -28,6 +28,17 @@ coverage/
 # Python
 __pycache__/
 *.pyc
+*.venv/
+.venv/
+venv/
+
+# Runtime DB / generated artifacts (schema now lives in backend/migrations/)
+*.db
+*.sqlite
+*.sqlite3
+backend/static/audio/*
+backend/storage/*
+!backend/storage/.gitkeep
 
 # Task files (Claude Code teams)
 tasks/

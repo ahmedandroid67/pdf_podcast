@@ -1,0 +1,16 @@
+E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\the-longform-guide.md
+E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\the-openclaw-guide.md
+E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\the-security-guide.md
+E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\the-shortform-guide.md
+E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\backend\storage\057f960c-1eb2-440e-937d-fe07fe0790d3\5b322494-2526-4652-aa2e-51c8da3787eb\input.pdf
+E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\backend\storage\8bbcf288-71ff-4444-8812-6c86d3e61f87\9bd2e915-6d6e-4a4a-8236-f5b8cfad23eb\input.pdf
+E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\backend\storage\b4284e2d-098a-40fd-b5e5-9181c13c6a01\77993976-c1e5-4fb5-8a93-1220d58770c6\input.pdf
+E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\backend\storage\b4284e2d-098a-40fd-b5e5-9181c13c6a01\8320c284-ec5b-4599-8a4d-589caa6a6354\input.pdf
+E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\backend\storage\b4284e2d-098a-40fd-b5e5-9181c13c6a01\8ef416bf-923d-412e-9dc6-11e5ba9213e0\input.pdf
+E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\backend\storage\b4284e2d-098a-40fd-b5e5-9181c13c6a01\acf5466b-6a51-4db2-b6e6-9436dd7490b3\input.pdf
+E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\sample_document.pdf
+graphify-out\transcripts\2e2c6339-9fcf-40f0-a14e-bd8c18ad840c.txt
+graphify-out\transcripts\a7035c28-a184-42f4-928d-79babbb79fe4.txt
+graphify-out\transcripts\dcd3ed1c-dff0-4ee9-9f10-bc9dee445d9f.txt
+graphify-out\transcripts\f49c2dd6-80e5-404d-9f19-19d2420927d8.txt
+graphify-out\transcripts\audio.txt

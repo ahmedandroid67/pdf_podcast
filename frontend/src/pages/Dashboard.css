@@ -449,6 +449,21 @@
   accent-color: #6366f1;
 }
 
+.db-job-audio-load {
+  height: 32px;
+  width: 32px;
+  flex-shrink: 0;
+  background: var(--brand-soft, #eef2ff);
+  border: 1.5px solid #c7d2fe;
+  border-radius: 999px;
+  color: #6366f1;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.db-job-audio-load:hover { background: #e0e7ff; }
+.db-job-audio-load:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* refresh button */
 .db-refresh-btn {
   height: 32px;

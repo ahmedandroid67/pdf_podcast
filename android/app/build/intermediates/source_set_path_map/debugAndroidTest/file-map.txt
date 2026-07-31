@@ -1,0 +1,35 @@
+com.pdfpodcaster.android.test.app-lifecycle-runtime-2.7.0-0 C:\Users\Ahmed\.gradle\caches\transforms-3\03fbed61e57f88ea10864f6e057d7e66\transformed\lifecycle-runtime-2.7.0\res
+com.pdfpodcaster.android.test.app-jetified-ui-geometry-release-1 C:\Users\Ahmed\.gradle\caches\transforms-3\159f3c445b9c24a6602038071078ff9c\transformed\jetified-ui-geometry-release\res
+com.pdfpodcaster.android.test.app-jetified-activity-1.8.2-2 C:\Users\Ahmed\.gradle\caches\transforms-3\180f7c35b9c8c7c8d21a68c444f260f6\transformed\jetified-activity-1.8.2\res
+com.pdfpodcaster.android.test.app-jetified-runtime-saveable-release-3 C:\Users\Ahmed\.gradle\caches\transforms-3\1fa3a5adc1d0e9c2504ee42078a548ff\transformed\jetified-runtime-saveable-release\res
+com.pdfpodcaster.android.test.app-jetified-ui-test-junit4-release-4 C:\Users\Ahmed\.gradle\caches\transforms-3\24c1a77bc629f815c0fdae8839b3593d\transformed\jetified-ui-test-junit4-release\res
+com.pdfpodcaster.android.test.app-jetified-savedstate-ktx-1.2.1-5 C:\Users\Ahmed\.gradle\caches\transforms-3\35c67b6b8331726f5686c5d6986e2e91\transformed\jetified-savedstate-ktx-1.2.1\res
+com.pdfpodcaster.android.test.app-jetified-emoji2-1.3.0-6 C:\Users\Ahmed\.gradle\caches\transforms-3\36808ae3a03479710a1c40d4ba50cf1c\transformed\jetified-emoji2-1.3.0\res
+com.pdfpodcaster.android.test.app-jetified-ui-release-7 C:\Users\Ahmed\.gradle\caches\transforms-3\36cc83b2bafd28e47bde6cde010c3b6b\transformed\jetified-ui-release\res
+com.pdfpodcaster.android.test.app-core-1.12.0-8 C:\Users\Ahmed\.gradle\caches\transforms-3\3b0fcb85eb2f7897d09d340b22c4f7cb\transformed\core-1.12.0\res
+com.pdfpodcaster.android.test.app-jetified-core-1.5.0-9 C:\Users\Ahmed\.gradle\caches\transforms-3\4304db199860688ef4fe31cef28fb164\transformed\jetified-core-1.5.0\res
+com.pdfpodcaster.android.test.app-jetified-lifecycle-process-2.7.0-10 C:\Users\Ahmed\.gradle\caches\transforms-3\520ee4559fcfff06d66cce3326e67661\transformed\jetified-lifecycle-process-2.7.0\res
+com.pdfpodcaster.android.test.app-jetified-savedstate-1.2.1-11 C:\Users\Ahmed\.gradle\caches\transforms-3\53b9eedc25a6a7d708573301b653f8d7\transformed\jetified-savedstate-1.2.1\res
+com.pdfpodcaster.android.test.app-core-runtime-2.2.0-12 C:\Users\Ahmed\.gradle\caches\transforms-3\55c8ec9546046d7b525914678f7fabb4\transformed\core-runtime-2.2.0\res
+com.pdfpodcaster.android.test.app-jetified-ui-unit-release-13 C:\Users\Ahmed\.gradle\caches\transforms-3\565bd3fc7c8e2a7d3f1c6d72839c22a5\transformed\jetified-ui-unit-release\res
+com.pdfpodcaster.android.test.app-jetified-core-ktx-1.12.0-14 C:\Users\Ahmed\.gradle\caches\transforms-3\63a723c306dd93b5bcf79915503d1861\transformed\jetified-core-ktx-1.12.0\res
+com.pdfpodcaster.android.test.app-jetified-activity-compose-1.8.2-15 C:\Users\Ahmed\.gradle\caches\transforms-3\7038b07f8fe2183f23c18bc8f5c98a69\transformed\jetified-activity-compose-1.8.2\res
+com.pdfpodcaster.android.test.app-jetified-profileinstaller-1.3.1-16 C:\Users\Ahmed\.gradle\caches\transforms-3\8220b4ee352df80b4116e164f5098246\transformed\jetified-profileinstaller-1.3.1\res
+com.pdfpodcaster.android.test.app-jetified-ui-util-release-17 C:\Users\Ahmed\.gradle\caches\transforms-3\836f0a7fe9220a2c461bad43f7fbf69d\transformed\jetified-ui-util-release\res
+com.pdfpodcaster.android.test.app-jetified-lifecycle-runtime-ktx-2.7.0-18 C:\Users\Ahmed\.gradle\caches\transforms-3\89feee1c3bbd403b0a22fb4ba849f4c3\transformed\jetified-lifecycle-runtime-ktx-2.7.0\res
+com.pdfpodcaster.android.test.app-jetified-runtime-release-19 C:\Users\Ahmed\.gradle\caches\transforms-3\968e7b768cbc2fa712dbd20f49784f69\transformed\jetified-runtime-release\res
+com.pdfpodcaster.android.test.app-jetified-lifecycle-viewmodel-ktx-2.7.0-20 C:\Users\Ahmed\.gradle\caches\transforms-3\9a6cd69aad8431977fad94ace8f7e718\transformed\jetified-lifecycle-viewmodel-ktx-2.7.0\res
+com.pdfpodcaster.android.test.app-jetified-annotation-experimental-1.3.1-21 C:\Users\Ahmed\.gradle\caches\transforms-3\a3280196a56c25392f77697a08de42c3\transformed\jetified-annotation-experimental-1.3.1\res
+com.pdfpodcaster.android.test.app-jetified-ui-text-release-22 C:\Users\Ahmed\.gradle\caches\transforms-3\a8a2aa9283d1e7a247485c877c1d419c\transformed\jetified-ui-text-release\res
+com.pdfpodcaster.android.test.app-jetified-activity-ktx-1.8.2-23 C:\Users\Ahmed\.gradle\caches\transforms-3\c15b2c188d5b8e40e88df34de7dd6ae7\transformed\jetified-activity-ktx-1.8.2\res
+com.pdfpodcaster.android.test.app-jetified-ui-graphics-release-24 C:\Users\Ahmed\.gradle\caches\transforms-3\c297fb9b1b5d12b07162328b6ce6c255\transformed\jetified-ui-graphics-release\res
+com.pdfpodcaster.android.test.app-lifecycle-viewmodel-2.7.0-25 C:\Users\Ahmed\.gradle\caches\transforms-3\cd6f6c13fd15cadb332bcbfb2620e434\transformed\lifecycle-viewmodel-2.7.0\res
+com.pdfpodcaster.android.test.app-lifecycle-livedata-core-2.7.0-26 C:\Users\Ahmed\.gradle\caches\transforms-3\e2123405ef85bb3d6a08a61ab12078b2\transformed\lifecycle-livedata-core-2.7.0\res
+com.pdfpodcaster.android.test.app-jetified-lifecycle-viewmodel-savedstate-2.7.0-27 C:\Users\Ahmed\.gradle\caches\transforms-3\e4dc2cb1e0a31115d6adecb49be227e0\transformed\jetified-lifecycle-viewmodel-savedstate-2.7.0\res
+com.pdfpodcaster.android.test.app-jetified-ui-test-release-28 C:\Users\Ahmed\.gradle\caches\transforms-3\ece43f61111e7034a07981db678bc135\transformed\jetified-ui-test-release\res
+com.pdfpodcaster.android.test.app-jetified-startup-runtime-1.1.1-29 C:\Users\Ahmed\.gradle\caches\transforms-3\fc72888e868f4cc5338c335da21f7cf3\transformed\jetified-startup-runtime-1.1.1\res
+com.pdfpodcaster.android.test.app-jetified-customview-poolingcontainer-1.0.0-30 C:\Users\Ahmed\.gradle\caches\transforms-3\fd0aa395133d0a6be442a6c9832e2593\transformed\jetified-customview-poolingcontainer-1.0.0\res
+com.pdfpodcaster.android.test.app-androidTest-31 E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\android\app\build\generated\res\resValues\androidTest\debug
+com.pdfpodcaster.android.test.app-mergeDebugAndroidTestResources-32 E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.pdfpodcaster.android.test.app-mergeDebugAndroidTestResources-33 E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.pdfpodcaster.android.test.app-merged_res-34 E:\0 Jobs\0 0 MY CLEAN PROJECTS\PdfParser\android\app\build\intermediates\merged_res\debugAndroidTest
